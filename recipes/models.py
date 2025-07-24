@@ -4,6 +4,12 @@ from django.utils import timezone
 
 
 class Recipe(models.Model):
+    DIFFICULTY_CHOICES = [
+        ('easy', 'Easy'),
+        ('medium', 'Medium'),
+        ('hard', 'Hard'),
+    ]
+    
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     image_url = models.URLField(blank=True)
@@ -11,6 +17,11 @@ class Recipe(models.Model):
     prep_time_minutes = models.PositiveIntegerField(null=True, blank=True)
     cook_time_minutes = models.PositiveIntegerField(null=True, blank=True)
     servings = models.PositiveIntegerField(null=True, blank=True)
+    difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='medium')
+    category = models.CharField(max_length=100, blank=True)
+    tags = models.CharField(max_length=200, blank=True, help_text="Comma-separated tags")
+    notes = models.TextField(blank=True, help_text="Personal notes about this recipe")
+    is_favorite = models.BooleanField(default=False)
     average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
     rating_count = models.PositiveIntegerField(default=0)
     is_cloned = models.BooleanField(default=False)
