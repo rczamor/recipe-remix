@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Recipe Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .recipe-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .recipe-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .star-rating {
+            color: #fbbf24;
+        }
+        .modal {
+            display: none;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .sidebar {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ff6b35;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-utensils text-orange-500 text-2xl"></i>
+                    <h1 class="text-xl font-bold text-gray-900">Family Recipes</h1>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="hidden md:flex flex-1 max-w-lg mx-8">
+                    <div class="relative w-full">
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Search recipes..."
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        />
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <button id="addRecipeBtn" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors font-medium">
+                        <i class="fas fa-plus mr-2"></i>Add Recipe
+                    </button>
+                    <button id="shoppingListBtn" class="text-gray-600 hover:text-gray-900 p-2">
+                        <i class="fas fa-shopping-cart text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Search -->
+            <div class="md:hidden pb-4">
+                <div class="relative">
+                    <input
+                        type="text"
+                        id="mobileSearchInput"
+                        placeholder="Search recipes..."
+                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Quick Actions -->
+        <div class="mb-8">
+            <div class="flex flex-wrap gap-4">
+                <button class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-star text-yellow-500 mr-2"></i>Highly Rated
+                </button>
+                <button class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-clock text-orange-500 mr-2"></i>Quick Meals
+                </button>
+                <button class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-calendar text-green-500 mr-2"></i>Recently Added
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="flex justify-center items-center py-12">
+            <div class="loading"></div>
+            <span class="ml-3 text-gray-600">Loading recipes...</span>
+        </div>
+
+        <!-- Recipe Grid -->
+        <div id="recipeGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-12 hidden">
+            <i class="fas fa-utensils text-gray-300 text-6xl mb-4"></i>
+            <p class="text-gray-500 text-lg mb-4">No recipes yet.</p>
+            <button id="emptyAddBtn" class="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors font-medium">
+                Add Your First Recipe
+            </button>
+        </div>
+    </main>
+
+    <!-- Add Recipe Modal -->
+    <div id="addRecipeModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold">Add New Recipe</h3>
+                <button id="closeAddModal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div id="addRecipeForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Recipe URL</label>
+                    <input
+                        type="url"
+                        id="recipeUrl"
+                        placeholder="https://example.com/recipe"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        required
+                    />
+                    <p class="text-sm text-gray-600 mt-1">Paste a URL from any recipe website</p>
+                </div>
+
+                <div class="flex space-x-3">
+                    <button id="importRecipeBtn" class="flex-1 bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors font-medium">
+                        <i class="fas fa-download mr-2"></i>Import Recipe
+                    </button>
+                    <button id="cancelAddBtn" class="border border-gray-300 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+
+            <div id="importingState" class="text-center py-8 hidden">
+                <div class="loading mx-auto mb-4"></div>
+                <p class="text-gray-600">Importing recipe...</p>
+                <p class="text-sm text-gray-500 mt-1">This may take a few moments</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recipe Details Modal -->
+    <div id="recipeModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div id="recipeDetails">
+                <!-- Recipe details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Shopping List Sidebar -->
+    <div id="shoppingSidebar" class="sidebar fixed right-0 top-0 h-full w-80 bg-white shadow-xl z-50">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Shopping List</h3>
+                <button id="closeSidebar" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="p-6 overflow-y-auto h-full pb-32">
+            <div id="shoppingListContent">
+                <!-- Shopping list items will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-60 space-y-2">
+        <!-- Toast messages will appear here -->
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

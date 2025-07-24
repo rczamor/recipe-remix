@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a full-stack recipe management application built with React, Express, and PostgreSQL. The application allows users to scrape recipes from URLs, manage their recipe collection, rate recipes, create shopping lists, and clone/modify existing recipes. It features a modern UI built with Radix UI components and Tailwind CSS.
+This is a full-stack family recipe management web application built with Django and PostgreSQL. The application allows users to scrape recipes from URLs, store them in structured format, rate recipes, clone and modify them, and generate shopping lists based on ingredients. The app is publicly viewable without authentication and features an elegant, user-friendly interface built with Tailwind CSS and vanilla JavaScript.
 
 ## User Preferences
 
@@ -11,58 +11,58 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
-- **Framework**: React with TypeScript
-- **Bundler**: Vite for development and production builds
-- **UI Library**: Radix UI components with shadcn/ui design system
-- **Styling**: Tailwind CSS with custom CSS variables for theming
-- **State Management**: TanStack Query (React Query) for server state management
-- **Routing**: Wouter for client-side routing
-- **Form Handling**: React Hook Form with Zod validation
+- **Technology**: Vanilla JavaScript with modern ES6+ features
+- **UI Framework**: Tailwind CSS for responsive design and styling
+- **Icons**: Font Awesome for consistent iconography
+- **Interactivity**: DOM manipulation with event handling and dynamic content rendering
+- **API Communication**: Fetch API for RESTful backend communication
 
 ### Backend Architecture
-- **Framework**: Express.js with TypeScript
-- **Database**: PostgreSQL with Neon serverless driver
-- **ORM**: Drizzle ORM with type-safe queries
-- **Web Scraping**: Cheerio for HTML parsing and recipe extraction
-- **Session Management**: Session-based authentication using connect-pg-simple
+- **Framework**: Django 5.2.4 with Python 3.11
+- **Database**: PostgreSQL with native Django ORM
+- **Web Scraping**: BeautifulSoup4 and requests for HTML parsing and recipe extraction
+- **Session Management**: Django sessions for anonymous user rating system
+- **API**: Django REST views with JSON responses
 
 ### Project Structure
 ```
-├── client/               # Frontend React application
-│   ├── src/
-│   │   ├── components/   # Reusable UI components
-│   │   ├── pages/        # Page components
-│   │   ├── lib/          # Utility functions and API client
-│   │   └── hooks/        # Custom React hooks
-├── server/               # Backend Express application
-│   ├── routes.ts         # API route definitions
-│   ├── storage.ts        # Database layer abstraction
-│   ├── db.ts            # Database connection setup
-│   └── services/        # Business logic services
-├── shared/               # Shared TypeScript types and schemas
-└── migrations/           # Database migration files
+├── recipe_manager/          # Django project configuration
+│   ├── settings.py         # Django settings and configuration
+│   ├── urls.py            # Main URL routing configuration
+│   └── wsgi.py            # WSGI application for deployment
+├── recipes/                # Main Django application
+│   ├── models.py          # Database models (Recipe, Ingredient, etc.)
+│   ├── views.py           # API endpoints and view functions
+│   ├── urls.py            # App-specific URL routing
+│   ├── services.py        # Web scraping and business logic
+│   ├── admin.py           # Django admin configuration
+│   └── templates/         # HTML templates
+├── static/                 # Static files (CSS, JavaScript, images)
+│   └── js/app.js          # Frontend JavaScript application
+└── manage.py              # Django management script
 ```
 
 ## Key Components
 
-### Database Schema
-- **recipes**: Core recipe data with metadata, ratings, and clone relationships
-- **ingredients**: Recipe ingredients with pricing and brand information
-- **instructions**: Step-by-step cooking instructions with timing
-- **ratings**: User ratings for recipes (session-based)
+### Database Schema (Django Models)
+- **Recipe**: Core recipe data including title, description, image, prep/cook times, servings, ratings, and clone relationships
+- **Ingredient**: Recipe ingredients with quantity, name, brand, price, and ordering
+- **Instruction**: Step-by-step cooking instructions with description, timing, and ordering  
+- **Rating**: User ratings for recipes using session-based anonymous rating system
 
-### API Services
-- **Recipe Management**: CRUD operations for recipes with search functionality
-- **Web Scraping**: Automatic recipe extraction from URLs using JSON-LD and HTML parsing
-- **Rating System**: Session-based recipe rating with average calculation
-- **Shopping Lists**: Ingredient aggregation and cost calculation
+### Backend Services (Django Views & Services)
+- **Recipe Management**: Full CRUD operations with search functionality
+- **Web Scraping**: Automatic recipe extraction from URLs using BeautifulSoup4, supporting JSON-LD structured data and HTML parsing
+- **Rating System**: Anonymous session-based recipe rating with automatic average calculation
+- **Shopping Lists**: Dynamic ingredient aggregation with cost calculation
+- **Recipe Cloning**: Full recipe duplication with editing capabilities
 
-### Frontend Features
-- **Recipe Cards**: Grid-based recipe display with ratings and metadata
-- **Recipe Details Modal**: Full recipe view with ingredients and instructions
-- **Add Recipe Modal**: URL-based recipe import with scraping
-- **Clone Recipe Modal**: Recipe duplication with editing capabilities
-- **Shopping List Sidebar**: Ingredient aggregation with pricing
+### Frontend Features (Vanilla JavaScript)
+- **Recipe Grid**: Responsive card-based recipe display with ratings and metadata
+- **Recipe Details Modal**: Complete recipe view with ingredients, instructions, and actions
+- **Add Recipe Modal**: URL-based recipe import with real-time scraping feedback
+- **Shopping List Sidebar**: Dynamic ingredient aggregation with pricing and management
+- **Rating System**: Interactive star-based rating with immediate feedback
 
 ## Data Flow
 
