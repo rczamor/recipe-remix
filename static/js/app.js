@@ -38,6 +38,7 @@ class RecipeApp {
 
         // Import recipe
         document.getElementById('importRecipeBtn').addEventListener('click', () => {
+            console.log('Import Recipe button clicked');
             this.importRecipe();
         });
 
@@ -347,7 +348,9 @@ class RecipeApp {
     }
 
     async importRecipe() {
+        console.log('importRecipe called');
         const url = document.getElementById('recipeUrl').value.trim();
+        console.log('Recipe URL:', url);
         
         if (!url) {
             this.showToast('Please enter a recipe URL', 'error');
@@ -373,13 +376,23 @@ class RecipeApp {
             }
 
             const recipeData = await response.json();
+            console.log('Recipe data received:', recipeData);
+            
+            // Hide the loading state and modal
+            this.hideAddRecipeModal();
             
             // Show preview modal for editing
-            this.hideAddRecipeModal();
-            this.showRecipePreviewModal(recipeData);
+            if (recipeData.preview) {
+                this.showRecipePreviewModal(recipeData);
+            } else {
+                // Recipe was saved directly, reload the list
+                this.showToast('Recipe imported successfully!', 'success');
+                this.loadRecipes();
+            }
             
         } catch (error) {
-            this.showToast(error.message, 'error');
+            console.error('Import error:', error);
+            this.showToast(error.message || 'Failed to import recipe', 'error');
             // Show form again
             document.getElementById('addRecipeForm').classList.remove('hidden');
             document.getElementById('importingState').classList.add('hidden');

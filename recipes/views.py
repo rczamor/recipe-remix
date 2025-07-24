@@ -105,10 +105,11 @@ def get_recipe(request, recipe_id):
 @csrf_exempt
 @require_http_methods(["POST"])
 def scrape_recipe(request):
-    """Scrape and create a recipe from URL"""
+    """Scrape recipe from URL and return data for preview"""
     try:
         data = json.loads(request.body)
         url = data.get('url')
+        save_directly = data.get('save_directly', False)
         
         if not url:
             return JsonResponse({'error': 'URL is required'}, status=400)
@@ -123,40 +124,67 @@ def scrape_recipe(request):
         scraper = RecipeScrapingService()
         scraped_data = scraper.scrape_recipe(url)
         
-        # Create recipe in database
-        with transaction.atomic():
-            recipe = Recipe.objects.create(
-                title=scraped_data['title'],
-                description=scraped_data.get('description', ''),
-                image_url=scraped_data.get('image_url', ''),
-                source_url=scraped_data['source_url'],
-                prep_time_minutes=scraped_data.get('prep_time_minutes'),
-                cook_time_minutes=scraped_data.get('cook_time_minutes'),
-                servings=scraped_data.get('servings'),
-            )
-            
-            # Create ingredients
-            for ing_data in scraped_data.get('ingredients', []):
-                Ingredient.objects.create(
-                    recipe=recipe,
-                    name=ing_data['name'],
-                    quantity=ing_data['quantity'],
-                    brand=ing_data.get('brand', ''),
-                    price=ing_data.get('price'),
-                    order=ing_data['order']
+        # If save_directly is True, create the recipe immediately
+        if save_directly:
+            with transaction.atomic():
+                recipe = Recipe.objects.create(
+                    title=scraped_data['title'],
+                    description=scraped_data.get('description', ''),
+                    image_url=scraped_data.get('image_url', ''),
+                    source_url=scraped_data['source_url'],
+                    prep_time_minutes=scraped_data.get('prep_time_minutes'),
+                    cook_time_minutes=scraped_data.get('cook_time_minutes'),
+                    servings=scraped_data.get('servings'),
                 )
-            
-            # Create instructions
-            for inst_data in scraped_data.get('instructions', []):
-                Instruction.objects.create(
-                    recipe=recipe,
-                    description=inst_data['description'],
-                    timeframe=inst_data.get('timeframe', ''),
-                    order=inst_data['order']
+                
+                # Create ingredients
+                for ing_data in scraped_data.get('ingredients', []):
+                    Ingredient.objects.create(
+                        recipe=recipe,
+                        name=ing_data['name'],
+                        quantity=ing_data['quantity'],
+                        brand=ing_data.get('brand', ''),
+                        price=ing_data.get('price'),
+                        order=ing_data['order']
+                    )
+                
+                # Create instructions
+                for inst_data in scraped_data.get('instructions', []):
+                    Instruction.objects.create(
+                        recipe=recipe,
+                        description=inst_data['description'],
+                        timeframe=inst_data.get('timeframe', ''),
+                        order=inst_data['order']
                 )
-        
-        # Return complete recipe data
-        return get_recipe(request, recipe.id)
+                
+                # Return the saved recipe data
+                return JsonResponse({
+                    'saved': True,
+                    'id': recipe.id,
+                    'title': recipe.title,
+                    'description': recipe.description,
+                    'image_url': recipe.image_url,
+                    'source_url': recipe.source_url,
+                    'prep_time_minutes': recipe.prep_time_minutes,
+                    'cook_time_minutes': recipe.cook_time_minutes,
+                    'servings': recipe.servings,
+                    'created_at': recipe.created_at.isoformat(),
+                })
+        else:
+            # Return scraped data for preview/editing
+            return JsonResponse({
+                'saved': False,
+                'preview': True,
+                'title': scraped_data.get('title', 'Untitled Recipe'),
+                'description': scraped_data.get('description', ''),
+                'image_url': scraped_data.get('image_url', ''),
+                'source_url': url,
+                'prep_time_minutes': scraped_data.get('prep_time_minutes'),
+                'cook_time_minutes': scraped_data.get('cook_time_minutes'),
+                'servings': scraped_data.get('servings'),
+                'ingredients': scraped_data.get('ingredients', []),
+                'instructions': scraped_data.get('instructions', [])
+            })
         
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON data'}, status=400)
