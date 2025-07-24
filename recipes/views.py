@@ -336,6 +336,18 @@ def rate_recipe(request, recipe_id):
 
 
 @csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_recipe(request, recipe_id):
+    """Delete a recipe"""
+    try:
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        recipe.delete()
+        return JsonResponse({'message': 'Recipe deleted successfully'})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
 @require_http_methods(["POST"])
 def get_shopping_list(request):
     """Get shopping list items for selected ingredients"""

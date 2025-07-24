@@ -216,6 +216,9 @@ class RecipeApp {
                         <button onclick="app.cloneRecipe(${recipe.id})" class="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors font-medium">
                             <i class="fas fa-copy mr-2"></i>Clone & Modify Recipe
                         </button>
+                        <button onclick="app.deleteRecipe(${recipe.id})" class="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors font-medium">
+                            <i class="fas fa-trash mr-2"></i>Delete Recipe
+                        </button>
                         <button onclick="app.addAllIngredientsToShoppingList()" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors font-medium">
                             <i class="fas fa-shopping-cart mr-2"></i>Add to Shopping List
                         </button>
@@ -289,8 +292,8 @@ class RecipeApp {
     }
 
     async cloneRecipe(recipeId) {
-        // For now, just show a toast. Full implementation would show a clone form
-        this.showToast('Clone functionality would open editing form', 'info');
+        this.hideRecipeModal();
+        this.showCloneModal(recipeId);
     }
 
     addAllIngredientsToShoppingList() {
@@ -481,6 +484,315 @@ class RecipeApp {
 
     shareShoppingList() {
         this.showToast('Share functionality would open share options', 'info');
+    }
+
+    showCloneModal(recipeId) {
+        if (!recipeId && !this.selectedRecipe) return;
+        
+        const recipe = this.selectedRecipe;
+        if (!recipe) return;
+
+        const modalContent = `
+            <div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-screen overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Clone & Modify Recipe</h2>
+                    <button onclick="app.hideCloneModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="cloneForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Recipe Title</label>
+                            <input type="text" id="cloneTitle" value="${recipe.title} (Copy)" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Servings</label>
+                            <input type="number" id="cloneServings" value="${recipe.servings || ''}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Prep Time (minutes)</label>
+                            <input type="number" id="clonePrepTime" value="${recipe.prep_time_minutes || ''}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Cook Time (minutes)</label>
+                            <input type="number" id="cloneCookTime" value="${recipe.cook_time_minutes || ''}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea id="cloneDescription" rows="3" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">${recipe.description}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Ingredients</h3>
+                            <div id="cloneIngredients" class="space-y-3">
+                                ${recipe.ingredients.map((ing, index) => `
+                                    <div class="ingredient-row grid grid-cols-12 gap-2 items-center">
+                                        <div class="col-span-3">
+                                            <input type="text" value="${ing.quantity}" placeholder="Quantity" 
+                                                   class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                                        </div>
+                                        <div class="col-span-4">
+                                            <input type="text" value="${ing.name}" placeholder="Ingredient" 
+                                                   class="w-full px-2 py-1 border border-gray-300 rounded text-sm" required>
+                                        </div>
+                                        <div class="col-span-2">
+                                            <input type="text" value="${ing.brand || ''}" placeholder="Brand" 
+                                                   class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                                        </div>
+                                        <div class="col-span-2">
+                                            <input type="number" value="${ing.price || ''}" placeholder="Price" step="0.01" 
+                                                   class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                                        </div>
+                                        <div class="col-span-1">
+                                            <button type="button" onclick="this.closest('.ingredient-row').remove()" 
+                                                    class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-trash text-sm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button type="button" onclick="app.addIngredientRow()" 
+                                    class="mt-3 text-orange-500 hover:text-orange-700 text-sm">
+                                <i class="fas fa-plus mr-1"></i>Add Ingredient
+                            </button>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Instructions</h3>
+                            <div id="cloneInstructions" class="space-y-3">
+                                ${recipe.instructions.map((inst, index) => `
+                                    <div class="instruction-row grid grid-cols-12 gap-2 items-start">
+                                        <div class="col-span-1 text-center">
+                                            <span class="w-6 h-6 bg-orange-500 text-white rounded-full text-xs flex items-center justify-center">
+                                                ${index + 1}
+                                            </span>
+                                        </div>
+                                        <div class="col-span-8">
+                                            <textarea rows="2" placeholder="Instruction description" 
+                                                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm" required>${inst.description}</textarea>
+                                        </div>
+                                        <div class="col-span-2">
+                                            <input type="text" value="${inst.timeframe || ''}" placeholder="Time" 
+                                                   class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                                        </div>
+                                        <div class="col-span-1">
+                                            <button type="button" onclick="this.closest('.instruction-row').remove(); app.renumberInstructions()" 
+                                                    class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-trash text-sm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button type="button" onclick="app.addInstructionRow()" 
+                                    class="mt-3 text-orange-500 hover:text-orange-700 text-sm">
+                                <i class="fas fa-plus mr-1"></i>Add Instruction
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                        <button type="button" onclick="app.hideCloneModal()" 
+                                class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+                            <i class="fas fa-copy mr-2"></i>Clone Recipe
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        document.getElementById('cloneModalContent').innerHTML = modalContent;
+        document.getElementById('cloneModal').classList.add('show');
+
+        // Add form submit handler
+        document.getElementById('cloneForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.submitCloneForm(recipe.id);
+        });
+    }
+
+    hideCloneModal() {
+        document.getElementById('cloneModal').classList.remove('show');
+    }
+
+    addIngredientRow() {
+        const container = document.getElementById('cloneIngredients');
+        const newRow = document.createElement('div');
+        newRow.className = 'ingredient-row grid grid-cols-12 gap-2 items-center';
+        newRow.innerHTML = `
+            <div class="col-span-3">
+                <input type="text" placeholder="Quantity" 
+                       class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+            </div>
+            <div class="col-span-4">
+                <input type="text" placeholder="Ingredient" 
+                       class="w-full px-2 py-1 border border-gray-300 rounded text-sm" required>
+            </div>
+            <div class="col-span-2">
+                <input type="text" placeholder="Brand" 
+                       class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+            </div>
+            <div class="col-span-2">
+                <input type="number" placeholder="Price" step="0.01" 
+                       class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+            </div>
+            <div class="col-span-1">
+                <button type="button" onclick="this.closest('.ingredient-row').remove()" 
+                        class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-trash text-sm"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(newRow);
+    }
+
+    addInstructionRow() {
+        const container = document.getElementById('cloneInstructions');
+        const instructionCount = container.children.length + 1;
+        const newRow = document.createElement('div');
+        newRow.className = 'instruction-row grid grid-cols-12 gap-2 items-start';
+        newRow.innerHTML = `
+            <div class="col-span-1 text-center">
+                <span class="w-6 h-6 bg-orange-500 text-white rounded-full text-xs flex items-center justify-center">
+                    ${instructionCount}
+                </span>
+            </div>
+            <div class="col-span-8">
+                <textarea rows="2" placeholder="Instruction description" 
+                          class="w-full px-2 py-1 border border-gray-300 rounded text-sm" required></textarea>
+            </div>
+            <div class="col-span-2">
+                <input type="text" placeholder="Time" 
+                       class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+            </div>
+            <div class="col-span-1">
+                <button type="button" onclick="this.closest('.instruction-row').remove(); app.renumberInstructions()" 
+                        class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-trash text-sm"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(newRow);
+    }
+
+    renumberInstructions() {
+        const instructions = document.querySelectorAll('.instruction-row');
+        instructions.forEach((row, index) => {
+            const numberSpan = row.querySelector('span');
+            if (numberSpan) {
+                numberSpan.textContent = index + 1;
+            }
+        });
+    }
+
+    async submitCloneForm(originalRecipeId) {
+        try {
+            const form = document.getElementById('cloneForm');
+            const formData = new FormData(form);
+            
+            // Collect basic recipe data
+            const cloneData = {
+                title: document.getElementById('cloneTitle').value,
+                description: document.getElementById('cloneDescription').value,
+                servings: parseInt(document.getElementById('cloneServings').value) || null,
+                prep_time_minutes: parseInt(document.getElementById('clonePrepTime').value) || null,
+                cook_time_minutes: parseInt(document.getElementById('cloneCookTime').value) || null,
+                ingredients: [],
+                instructions: []
+            };
+
+            // Collect ingredients
+            const ingredientRows = document.querySelectorAll('.ingredient-row');
+            ingredientRows.forEach((row, index) => {
+                const inputs = row.querySelectorAll('input');
+                if (inputs[1].value.trim()) { // Only add if ingredient name is not empty
+                    cloneData.ingredients.push({
+                        quantity: inputs[0].value,
+                        name: inputs[1].value,
+                        brand: inputs[2].value,
+                        price: inputs[3].value || null,
+                        order: index + 1
+                    });
+                }
+            });
+
+            // Collect instructions
+            const instructionRows = document.querySelectorAll('.instruction-row');
+            instructionRows.forEach((row, index) => {
+                const textarea = row.querySelector('textarea');
+                const timeInput = row.querySelector('input[type="text"]');
+                if (textarea.value.trim()) { // Only add if description is not empty
+                    cloneData.instructions.push({
+                        description: textarea.value,
+                        timeframe: timeInput.value,
+                        order: index + 1
+                    });
+                }
+            });
+
+            const response = await fetch(`/api/recipes/${originalRecipeId}/clone/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(cloneData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to clone recipe');
+            }
+
+            const clonedRecipe = await response.json();
+            this.showToast('Recipe cloned successfully!', 'success');
+            this.hideCloneModal();
+            this.loadRecipes();
+        } catch (error) {
+            this.showToast(error.message, 'error');
+            console.error('Error cloning recipe:', error);
+        }
+    }
+
+    async deleteRecipe(recipeId) {
+        if (!confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/recipes/${recipeId}/delete/`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to delete recipe');
+            }
+
+            this.showToast('Recipe deleted successfully!', 'success');
+            this.hideRecipeModal();
+            this.loadRecipes();
+        } catch (error) {
+            this.showToast(error.message, 'error');
+            console.error('Error deleting recipe:', error);
+        }
     }
 
     showLoading() {
