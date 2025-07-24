@@ -372,15 +372,281 @@ class RecipeApp {
                 throw new Error(error.error || 'Failed to import recipe');
             }
 
-            const recipe = await response.json();
-            this.showToast('Recipe imported successfully!', 'success');
+            const recipeData = await response.json();
+            
+            // Show preview modal for editing
             this.hideAddRecipeModal();
-            this.loadRecipes();
+            this.showRecipePreviewModal(recipeData);
+            
         } catch (error) {
             this.showToast(error.message, 'error');
             // Show form again
             document.getElementById('addRecipeForm').classList.remove('hidden');
             document.getElementById('importingState').classList.add('hidden');
+        }
+    }
+
+    showRecipePreviewModal(recipeData) {
+        const modalContent = `
+            <div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-screen overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Review & Edit Recipe</h2>
+                    <button onclick="app.hideRecipePreviewModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="recipePreviewForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Recipe Title</label>
+                            <input type="text" id="previewTitle" value="${(recipeData.title || '').replace(/"/g, '&quot;')}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Servings</label>
+                            <input type="number" id="previewServings" value="${recipeData.servings || ''}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Prep Time (minutes)</label>
+                            <input type="number" id="previewPrepTime" value="${recipeData.prep_time_minutes || ''}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Cook Time (minutes)</label>
+                            <input type="number" id="previewCookTime" value="${recipeData.cook_time_minutes || ''}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea id="previewDescription" rows="3" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">${(recipeData.description || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+                    </div>
+
+                    ${recipeData.image_url ? `
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Recipe Image</label>
+                            <img src="${recipeData.image_url}" alt="Recipe preview" class="w-full max-w-md rounded-lg">
+                        </div>
+                    ` : ''}
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Ingredients</h3>
+                            <div id="previewIngredients" class="space-y-3">
+                                ${(recipeData.ingredients || []).map((ing, index) => `
+                                    <div class="ingredient-row grid grid-cols-12 gap-2 items-center">
+                                        <div class="col-span-3">
+                                            <input type="text" value="${(ing.quantity || '').replace(/"/g, '&quot;')}" placeholder="Quantity" 
+                                                   class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                                        </div>
+                                        <div class="col-span-7">
+                                            <input type="text" value="${(ing.name || '').replace(/"/g, '&quot;')}" placeholder="Ingredient" 
+                                                   class="w-full px-2 py-1 border border-gray-300 rounded text-sm" required>
+                                        </div>
+                                        <div class="col-span-2">
+                                            <button type="button" onclick="this.closest('.ingredient-row').remove()" 
+                                                    class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-trash text-sm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button type="button" onclick="app.addPreviewIngredientRow()" 
+                                    class="mt-3 text-orange-500 hover:text-orange-700 text-sm">
+                                <i class="fas fa-plus mr-1"></i>Add Ingredient
+                            </button>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Instructions</h3>
+                            <div id="previewInstructions" class="space-y-3">
+                                ${(recipeData.instructions || []).map((inst, index) => `
+                                    <div class="instruction-row grid grid-cols-12 gap-2 items-start">
+                                        <div class="col-span-1 text-center">
+                                            <span class="w-6 h-6 bg-orange-500 text-white rounded-full text-xs flex items-center justify-center">
+                                                ${index + 1}
+                                            </span>
+                                        </div>
+                                        <div class="col-span-9">
+                                            <textarea rows="2" placeholder="Instruction description" 
+                                                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm" required>${(inst.description || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+                                        </div>
+                                        <div class="col-span-2">
+                                            <button type="button" onclick="this.closest('.instruction-row').remove(); app.renumberPreviewInstructions()" 
+                                                    class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-trash text-sm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button type="button" onclick="app.addPreviewInstructionRow()" 
+                                    class="mt-3 text-orange-500 hover:text-orange-700 text-sm">
+                                <i class="fas fa-plus mr-1"></i>Add Instruction
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                        <button type="button" onclick="app.hideRecipePreviewModal()" 
+                                class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+                            <i class="fas fa-save mr-2"></i>Save Recipe
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        document.getElementById('recipePreviewContent').innerHTML = modalContent;
+        document.getElementById('recipePreviewModal').classList.add('show');
+
+        // Store recipe data for later use
+        this.previewRecipeData = recipeData;
+
+        // Add form submit handler
+        document.getElementById('recipePreviewForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.savePreviewedRecipe();
+        });
+    }
+
+    hideRecipePreviewModal() {
+        document.getElementById('recipePreviewModal').classList.remove('show');
+        this.previewRecipeData = null;
+    }
+
+    addPreviewIngredientRow() {
+        const container = document.getElementById('previewIngredients');
+        const newRow = document.createElement('div');
+        newRow.className = 'ingredient-row grid grid-cols-12 gap-2 items-center';
+        newRow.innerHTML = `
+            <div class="col-span-3">
+                <input type="text" placeholder="Quantity" 
+                       class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+            </div>
+            <div class="col-span-7">
+                <input type="text" placeholder="Ingredient" 
+                       class="w-full px-2 py-1 border border-gray-300 rounded text-sm" required>
+            </div>
+            <div class="col-span-2">
+                <button type="button" onclick="this.closest('.ingredient-row').remove()" 
+                        class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-trash text-sm"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(newRow);
+    }
+
+    addPreviewInstructionRow() {
+        const container = document.getElementById('previewInstructions');
+        const instructionCount = container.children.length + 1;
+        const newRow = document.createElement('div');
+        newRow.className = 'instruction-row grid grid-cols-12 gap-2 items-start';
+        newRow.innerHTML = `
+            <div class="col-span-1 text-center">
+                <span class="w-6 h-6 bg-orange-500 text-white rounded-full text-xs flex items-center justify-center">
+                    ${instructionCount}
+                </span>
+            </div>
+            <div class="col-span-9">
+                <textarea rows="2" placeholder="Instruction description" 
+                          class="w-full px-2 py-1 border border-gray-300 rounded text-sm" required></textarea>
+            </div>
+            <div class="col-span-2">
+                <button type="button" onclick="this.closest('.instruction-row').remove(); app.renumberPreviewInstructions()" 
+                        class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-trash text-sm"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(newRow);
+    }
+
+    renumberPreviewInstructions() {
+        const instructions = document.querySelectorAll('#previewInstructions .instruction-row');
+        instructions.forEach((row, index) => {
+            const numberSpan = row.querySelector('span');
+            if (numberSpan) {
+                numberSpan.textContent = index + 1;
+            }
+        });
+    }
+
+    async savePreviewedRecipe() {
+        if (!this.previewRecipeData) return;
+
+        // Collect form data
+        const formData = {
+            title: document.getElementById('previewTitle').value,
+            description: document.getElementById('previewDescription').value,
+            servings: parseInt(document.getElementById('previewServings').value) || null,
+            prep_time_minutes: parseInt(document.getElementById('previewPrepTime').value) || null,
+            cook_time_minutes: parseInt(document.getElementById('previewCookTime').value) || null,
+            image_url: this.previewRecipeData.image_url,
+            source_url: this.previewRecipeData.source_url,
+            ingredients: [],
+            instructions: []
+        };
+
+        // Collect ingredients
+        const ingredientRows = document.querySelectorAll('#previewIngredients .ingredient-row');
+        ingredientRows.forEach((row, index) => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs[1].value.trim()) {
+                formData.ingredients.push({
+                    quantity: inputs[0].value,
+                    name: inputs[1].value,
+                    order: index + 1
+                });
+            }
+        });
+
+        // Collect instructions
+        const instructionRows = document.querySelectorAll('#previewInstructions .instruction-row');
+        instructionRows.forEach((row, index) => {
+            const textarea = row.querySelector('textarea');
+            if (textarea.value.trim()) {
+                formData.instructions.push({
+                    description: textarea.value,
+                    order: index + 1
+                });
+            }
+        });
+
+        try {
+            const response = await fetch('/api/recipes/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to save recipe');
+            }
+
+            const savedRecipe = await response.json();
+            this.showToast('Recipe saved successfully!', 'success');
+            this.hideRecipePreviewModal();
+            this.loadRecipes();
+        } catch (error) {
+            this.showToast(error.message, 'error');
+            console.error('Error saving recipe:', error);
         }
     }
 

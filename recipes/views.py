@@ -166,6 +166,58 @@ def scrape_recipe(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+def create_recipe(request):
+    """Create a new recipe from scratch or from scraped data"""
+    try:
+        data = json.loads(request.body)
+        
+        # Create the recipe
+        recipe = Recipe.objects.create(
+            title=data.get('title', 'Untitled Recipe'),
+            description=data.get('description', ''),
+            image_url=data.get('image_url', ''),
+            source_url=data.get('source_url', ''),
+            prep_time_minutes=data.get('prep_time_minutes'),
+            cook_time_minutes=data.get('cook_time_minutes'),
+            servings=data.get('servings')
+        )
+        
+        # Create ingredients
+        for idx, ing_data in enumerate(data.get('ingredients', [])):
+            Ingredient.objects.create(
+                recipe=recipe,
+                quantity=ing_data.get('quantity', ''),
+                name=ing_data.get('name', ''),
+                order=ing_data.get('order', idx + 1)
+            )
+        
+        # Create instructions
+        for idx, inst_data in enumerate(data.get('instructions', [])):
+            Instruction.objects.create(
+                recipe=recipe,
+                description=inst_data.get('description', ''),
+                order=inst_data.get('order', idx + 1)
+            )
+        
+        # Return the created recipe
+        return JsonResponse({
+            'id': recipe.id,
+            'title': recipe.title,
+            'description': recipe.description,
+            'image_url': recipe.image_url,
+            'source_url': recipe.source_url,
+            'prep_time_minutes': recipe.prep_time_minutes,
+            'cook_time_minutes': recipe.cook_time_minutes,
+            'servings': recipe.servings,
+            'created_at': recipe.created_at.isoformat(),
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
 def clone_recipe(request, recipe_id):
     """Clone and modify a recipe"""
     try:

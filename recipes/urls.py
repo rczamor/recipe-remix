@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     # API endpoints
     path('api/recipes/', views.get_recipes, name='get_recipes'),
+    path('api/recipes/create/', views.create_recipe, name='create_recipe'),
     path('api/recipes/search/', views.get_recipes, name='search_recipes'),  # Uses same view with query param
     path('api/recipes/<int:recipe_id>/', views.get_recipe, name='get_recipe'),
     path('api/recipes/<int:recipe_id>/update/', views.update_recipe, name='update_recipe'),
