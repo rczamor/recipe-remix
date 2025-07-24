@@ -75,35 +75,43 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Core Dependencies
-- **@neondatabase/serverless**: PostgreSQL connection for serverless environments
-- **drizzle-orm**: Type-safe database queries and migrations
-- **@tanstack/react-query**: Server state management and caching
-- **cheerio**: HTML parsing for web scraping
-- **@radix-ui/***: Headless UI components
-- **tailwindcss**: Utility-first CSS framework
+- **Django**: Modern Python web framework for rapid development
+- **PostgreSQL**: Robust relational database with Django ORM integration
+- **BeautifulSoup4**: HTML parsing library for web scraping
+- **requests**: HTTP library for making web requests
+- **psycopg2-binary**: PostgreSQL database adapter for Python
+- **python-decouple**: Environment variable management
+- **Pillow**: Image processing library for Django
 
-### Development Tools
-- **vite**: Fast development server and build tool
-- **tsx**: TypeScript execution for development
-- **esbuild**: Fast JavaScript bundler for production
+### Frontend Dependencies
+- **Tailwind CSS**: Utility-first CSS framework via CDN
+- **Font Awesome**: Icon library via CDN
+- **Vanilla JavaScript**: Modern ES6+ for dynamic functionality
 
 ## Deployment Strategy
 
 ### Development
-- **Frontend**: Vite dev server with HMR and middleware mode
-- **Backend**: tsx with nodemon-like behavior for auto-restart
-- **Database**: Neon PostgreSQL with connection pooling
+- **Application**: Django development server on port 5000
+- **Database**: PostgreSQL with Django ORM and migrations
+- **Static Files**: Served directly by Django during development
+- **Hot Reload**: Django auto-reloads on code changes
 
 ### Production
-- **Build Process**: 
-  - Frontend: Vite builds to `dist/public`
-  - Backend: esbuild bundles server to `dist/index.js`
-- **Serving**: Express serves both API routes and static frontend files
-- **Database**: PostgreSQL connection with environment-based configuration
+- **WSGI Server**: Production-ready Django deployment
+- **Static Files**: Collected and served efficiently
+- **Database**: PostgreSQL with optimized connection pooling
+- **Security**: Django security middleware and CSRF protection
 
 ### Environment Configuration
-- **DATABASE_URL**: PostgreSQL connection string (required)
-- **NODE_ENV**: Environment detection for development/production features
-- **REPL_ID**: Replit-specific integration for development tools
+- **DATABASE_URL**: PostgreSQL connection string (automatically configured)
+- **DEBUG**: Django debug mode (development vs production)
+- **SECRET_KEY**: Django security key for sessions and CSRF
 
-The application follows a typical full-stack pattern where the Express server handles both API requests and serves the built React application in production, while providing separate development servers in development mode.
+### Current Status (July 24, 2025)
+- ✓ Successfully migrated from Node.js/React to Django
+- ✓ Django server running properly on port 5000
+- ✓ Database migrations applied successfully
+- ✓ Application serving homepage correctly
+- ✓ All Django checks passing without issues
+
+The application now runs as a pure Django web application with server-side rendering and vanilla JavaScript for client-side interactivity.
