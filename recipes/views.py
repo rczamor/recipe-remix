@@ -351,10 +351,14 @@ def clone_recipe(request, recipe_id):
 
 
 @csrf_exempt
-@require_http_methods(["PATCH"])
 def update_recipe(request, recipe_id):
     """Update a recipe"""
     print(f"UPDATE_RECIPE called with method: {request.method} for recipe_id: {recipe_id}")
+    
+    # Manually check for PATCH method
+    if request.method != 'PATCH':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
     try:
         recipe = get_object_or_404(Recipe, id=recipe_id)
         data = json.loads(request.body)
@@ -411,8 +415,47 @@ def update_recipe(request, recipe_id):
             
         create_recipe_revision(recipe, change_summary)
         
-        # Return updated recipe data
-        return get_recipe(request, recipe.id)
+        # Return updated recipe data as JSON
+        recipe_data = {
+            'id': recipe.id,
+            'title': recipe.title,
+            'description': recipe.description,
+            'image_url': recipe.image_url,
+            'source_url': recipe.source_url,
+            'prep_time_minutes': recipe.prep_time_minutes,
+            'cook_time_minutes': recipe.cook_time_minutes,
+            'servings': recipe.servings,
+            'difficulty': recipe.difficulty,
+            'category': recipe.category,
+            'tags': recipe.tags,
+            'notes': recipe.notes,
+            'is_favorite': recipe.is_favorite,
+            'average_rating': str(recipe.average_rating),
+            'rating_count': recipe.rating_count,
+            'is_cloned': recipe.is_cloned,
+            'original_recipe_id': recipe.original_recipe.id if recipe.original_recipe else None,
+            'created_at': recipe.created_at.isoformat(),
+            'ingredients': [
+                {
+                    'name': ing.name,
+                    'quantity': ing.quantity,
+                    'brand': ing.brand,
+                    'price': str(ing.price) if ing.price else None,
+                    'order': ing.order
+                }
+                for ing in recipe.ingredients.all().order_by('order')
+            ],
+            'instructions': [
+                {
+                    'description': inst.description,
+                    'timeframe': inst.timeframe,
+                    'order': inst.order
+                }
+                for inst in recipe.instructions.all().order_by('order')
+            ]
+        }
+        
+        return JsonResponse(recipe_data)
         
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON data'}, status=400)
