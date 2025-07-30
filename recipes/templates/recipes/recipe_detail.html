@@ -47,17 +47,17 @@
                     <i class="fas fa-arrow-left"></i>
                     <h1 class="text-2xl font-bold">Back to Recipes</h1>
                 </a>
-                <div class="flex space-x-4">
-                    <a href="/recipe/{{ recipe.id }}/edit" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                <div class="flex items-center space-x-3">
+                    <a href="/recipe/{{ recipe.id }}/edit" class="inline-flex items-center bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors font-medium">
                         <i class="fas fa-edit mr-2"></i>Edit Recipe
                     </a>
-                    <button onclick="cloneRecipe({{ recipe.id }})" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                    <button onclick="cloneRecipe({{ recipe.id }})" class="inline-flex items-center bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors font-medium">
                         <i class="fas fa-copy mr-2"></i>Clone Recipe
                     </button>
-                    <button onclick="showRevisionHistory({{ recipe.id }})" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                    <button onclick="showRevisionHistory({{ recipe.id }})" class="inline-flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium">
                         <i class="fas fa-history mr-2"></i>View History
                     </button>
-                    <button onclick="deleteRecipe({{ recipe.id }})" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                    <button onclick="deleteRecipe({{ recipe.id }})" class="inline-flex items-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium">
                         <i class="fas fa-trash mr-2"></i>Delete
                     </button>
                 </div>
