@@ -156,6 +156,23 @@
                     <p class="text-sm text-gray-600 mt-1">Paste a URL from any recipe website</p>
                 </div>
 
+                <div class="flex items-center justify-between mb-4 p-3 bg-blue-50 rounded-lg">
+                    <div class="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="enableAICleaning"
+                            name="enableAICleaning"
+                            checked
+                            class="mr-2 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                        />
+                        <label for="enableAICleaning" class="text-sm text-gray-700">
+                            <span class="font-medium">Use AI to clean recipe</span>
+                            <span class="text-gray-500 block text-xs">Fixes formatting, spelling, and standardizes ingredients</span>
+                        </label>
+                    </div>
+                    <i class="fas fa-robot text-blue-600"></i>
+                </div>
+
                 <div class="flex space-x-3 mt-4">
                     <button type="button" id="importRecipeBtn" class="flex-1 bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors font-medium flex items-center justify-center" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">
                         <i class="fas fa-download mr-2"></i>Import Recipe

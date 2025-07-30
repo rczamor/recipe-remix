@@ -142,6 +142,7 @@ def scrape_recipe(request):
         data = json.loads(request.body)
         url = data.get('url')
         save_directly = data.get('save_directly', False)
+        enable_cleaning = data.get('enable_cleaning', True)  # Default to True
         
         if not url:
             return JsonResponse({'error': 'URL is required'}, status=400)
@@ -154,7 +155,7 @@ def scrape_recipe(request):
         
         # Scrape recipe data
         scraper = RecipeScrapingService()
-        scraped_data = scraper.scrape_recipe(url)
+        scraped_data = scraper.scrape_recipe(url, enable_cleaning=enable_cleaning)
         
         # If save_directly is True, create the recipe immediately
         if save_directly:

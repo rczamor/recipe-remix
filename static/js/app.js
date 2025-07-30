@@ -340,7 +340,9 @@ class RecipeApp {
     async importRecipe() {
         console.log('importRecipe called');
         const url = document.getElementById('recipeUrl').value.trim();
+        const enableCleaning = document.getElementById('enableAICleaning').checked;
         console.log('Recipe URL:', url);
+        console.log('Enable AI cleaning:', enableCleaning);
         
         if (!url) {
             this.showToast('Please enter a recipe URL', 'error');
@@ -357,7 +359,10 @@ class RecipeApp {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ url })
+                body: JSON.stringify({ 
+                    url,
+                    enable_cleaning: enableCleaning 
+                })
             });
 
             if (!response.ok) {

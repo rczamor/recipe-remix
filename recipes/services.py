@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from typing import Dict, List, Optional, Any
 from .models import Recipe, RecipeRevision, Ingredient, Instruction
+from .recipe_cleaner import RecipeCleaningService
 
 
 def create_recipe_revision(recipe: Recipe, change_summary: str = "") -> RecipeRevision:
@@ -67,11 +68,13 @@ class RecipeScrapingService:
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
+        self.cleaner = RecipeCleaningService()
     
-    def scrape_recipe(self, url: str) -> Dict[str, Any]:
+    def scrape_recipe(self, url: str, enable_cleaning: bool = True) -> Dict[str, Any]:
         """
         Scrape a recipe from a given URL.
         Returns a dictionary with recipe data.
+        If enable_cleaning is True, uses AI to clean and standardize the data.
         """
         try:
             response = requests.get(url, headers=self.headers, timeout=10)
@@ -187,7 +190,7 @@ class RecipeScrapingService:
         # Extract instructions
         instructions = self._extract_instructions(soup)
         
-        return {
+        raw_data = {
             'title': title,
             'description': description,
             'image_url': image_url,
@@ -197,6 +200,17 @@ class RecipeScrapingService:
             'ingredients': ingredients,
             'instructions': instructions
         }
+        
+        # Clean the scraped data using the LLM cleaner if enabled
+        if enable_cleaning:
+            try:
+                cleaned_data = self.cleaner.clean_recipe(raw_data)
+                return cleaned_data
+            except Exception as e:
+                print(f"Warning: Recipe cleaning failed, returning raw data. Error: {str(e)}")
+                return raw_data
+        else:
+            return raw_data
     
     def _extract_title(self, soup: BeautifulSoup) -> str:
         """Extract recipe title"""
