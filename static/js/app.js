@@ -110,7 +110,7 @@ class RecipeApp {
         const rating = parseFloat(recipe.average_rating || 0);
 
         return `
-            <div class="recipe-card bg-white rounded-xl shadow-md overflow-hidden">
+            <a href="/recipe/${recipe.id}/" class="recipe-card bg-white rounded-xl shadow-md overflow-hidden block hover:shadow-lg transition-shadow">
                 <img
                     src="${recipe.image_url || 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400&h=300&fit=crop'}"
                     alt="${recipe.title}"
@@ -137,18 +137,14 @@ class RecipeApp {
                         </span>
                     </div>
                     
-                    <div class="flex space-x-2" onclick="event.stopPropagation()">
-                        <a href="/recipe/${recipe.id}/" 
-                           class="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium text-center">
-                            View Recipe
-                        </a>
+                    <div class="flex justify-end" onclick="event.stopPropagation(); event.preventDefault();">
                         <button onclick="app.cloneRecipe(${recipe.id})" 
                                 class="bg-gray-100 text-gray-700 hover:bg-gray-200 py-2 px-3 rounded-lg transition-colors">
-                            <i class="fas fa-copy"></i>
+                            <i class="fas fa-copy mr-1"></i>Clone
                         </button>
                     </div>
                 </div>
-            </div>
+            </a>
         `;
     }
 
