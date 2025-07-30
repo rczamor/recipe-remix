@@ -18,6 +18,11 @@ urlpatterns = [
     path('api/recipes/<int:recipe_id>/', views.get_recipe, name='get_recipe'),
     path('api/shopping-list/', views.get_shopping_list, name='get_shopping_list'),
     
+    # Chat API endpoints
+    path('api/chat/message/', views.chat_message, name='chat_message'),
+    path('api/chat/history/', views.chat_history, name='chat_history'),
+    path('api/chat/clear/', views.clear_chat, name='clear_chat'),
+    
     # Main app page
     path('', views.home, name='home'),
     path('recipe/<int:recipe_id>/', views.recipe_detail, name='recipe_detail'),

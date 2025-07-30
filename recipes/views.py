@@ -1,13 +1,14 @@
 import json
 from decimal import Decimal
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Avg, Count
 from django.db import transaction
-from .models import Recipe, Ingredient, Instruction, Rating, RecipeRevision
+from .models import Recipe, Ingredient, Instruction, Rating, RecipeRevision, ChatMessage
 from .services import RecipeScrapingService, create_recipe_revision
+from .ai_assistant import RecipeAssistant
 
 
 def home(request):
@@ -606,3 +607,113 @@ def get_revision_details(request, recipe_id, revision_number):
         'ingredients': revision.ingredients_data,
         'instructions': revision.instructions_data,
     })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def chat_message(request):
+    """Send a chat message to the AI assistant"""
+    try:
+        data = json.loads(request.body)
+        message = data.get('message', '').strip()
+        recipe_id = data.get('recipe_id')
+        
+        if not message:
+            return JsonResponse({'error': 'Message is required'}, status=400)
+        
+        # Get or create session key
+        if not request.session.session_key:
+            request.session.create()
+        session_id = request.session.session_key
+        
+        # Get recipe context if provided
+        recipe_context = None
+        if recipe_id:
+            recipe_context = get_object_or_404(Recipe, id=recipe_id)
+        
+        # Create assistant and get response
+        assistant = RecipeAssistant(session_id, recipe_context)
+        response = assistant.chat(message)
+        
+        return JsonResponse(response)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+def chat_history(request):
+    """Get chat history for the current session"""
+    try:
+        recipe_id = request.GET.get('recipe_id')
+        
+        # Get or create session key
+        if not request.session.session_key:
+            request.session.create()
+        session_id = request.session.session_key
+        
+        # Get recipe context if provided
+        recipe_context = None
+        if recipe_id:
+            recipe_context = get_object_or_404(Recipe, id=recipe_id)
+        
+        # Try to get chat history without creating full assistant
+        # Just query messages directly for faster response
+        messages = ChatMessage.objects.filter(
+            session_id=session_id,
+            recipe=recipe_context
+        ).order_by('created_at')
+        
+        history = [
+            {
+                'role': msg.role,
+                'content': msg.content,
+                'timestamp': msg.created_at.isoformat()
+            }
+            for msg in messages
+        ]
+        
+        return JsonResponse({
+            'session_id': session_id,
+            'recipe_id': recipe_id,
+            'messages': history
+        })
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Chat history error: {error_details}")
+        return JsonResponse({'error': str(e), 'details': error_details}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def clear_chat(request):
+    """Clear chat history for the current session"""
+    try:
+        data = json.loads(request.body)
+        recipe_id = data.get('recipe_id')
+        
+        # Get session key
+        if not request.session.session_key:
+            return JsonResponse({'message': 'No chat history to clear'})
+        
+        session_id = request.session.session_key
+        
+        # Delete chat messages
+        query = ChatMessage.objects.filter(session_id=session_id)
+        if recipe_id:
+            query = query.filter(recipe_id=recipe_id)
+        
+        deleted_count = query.count()
+        query.delete()
+        
+        return JsonResponse({
+            'message': f'Cleared {deleted_count} messages',
+            'deleted_count': deleted_count
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

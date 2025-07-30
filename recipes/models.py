@@ -114,3 +114,23 @@ class RecipeRevision(models.Model):
         
     def __str__(self):
         return f"{self.recipe.title} - Revision {self.revision_number}"
+
+
+class ChatMessage(models.Model):
+    ROLE_CHOICES = [
+        ('user', 'User'),
+        ('assistant', 'Assistant'),
+        ('system', 'System'),
+    ]
+    
+    session_id = models.CharField(max_length=40)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    content = models.TextField()
+    recipe = models.ForeignKey(Recipe, on_delete=models.SET_NULL, null=True, blank=True, related_name='chat_messages')
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        ordering = ['created_at']
+        
+    def __str__(self):
+        return f"{self.role}: {self.content[:50]}..."
