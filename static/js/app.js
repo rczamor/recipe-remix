@@ -110,8 +110,7 @@ class RecipeApp {
         const rating = parseFloat(recipe.average_rating || 0);
 
         return `
-            <div class="recipe-card bg-white rounded-xl shadow-md overflow-hidden cursor-pointer" 
-                 onclick="app.viewRecipe(${recipe.id})">
+            <div class="recipe-card bg-white rounded-xl shadow-md overflow-hidden">
                 <img
                     src="${recipe.image_url || 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400&h=300&fit=crop'}"
                     alt="${recipe.title}"
@@ -139,10 +138,10 @@ class RecipeApp {
                     </div>
                     
                     <div class="flex space-x-2" onclick="event.stopPropagation()">
-                        <button onclick="app.viewRecipe(${recipe.id})" 
-                                class="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium">
+                        <a href="/recipe/${recipe.id}/" 
+                           class="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium text-center">
                             View Recipe
-                        </button>
+                        </a>
                         <button onclick="app.cloneRecipe(${recipe.id})" 
                                 class="bg-gray-100 text-gray-700 hover:bg-gray-200 py-2 px-3 rounded-lg transition-colors">
                             <i class="fas fa-copy"></i>
@@ -163,17 +162,9 @@ class RecipeApp {
         }).join('');
     }
 
-    async viewRecipe(recipeId) {
-        try {
-            const response = await fetch(`/api/recipes/${recipeId}/`);
-            if (!response.ok) throw new Error('Failed to load recipe');
-            
-            this.selectedRecipe = await response.json();
-            this.showRecipeModal();
-        } catch (error) {
-            this.showToast('Failed to load recipe details', 'error');
-            console.error('Error loading recipe:', error);
-        }
+    viewRecipe(recipeId) {
+        // Navigate to the recipe detail page
+        window.location.href = `/recipe/${recipeId}/`;
     }
 
     showRecipeModal() {

@@ -15,6 +15,26 @@ def home(request):
     return render(request, 'recipes/index.html')
 
 
+def recipe_detail(request, recipe_id):
+    """Display a single recipe on its own page"""
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    
+    # Get user's rating if exists
+    user_rating = None
+    if request.session.session_key:
+        try:
+            rating = Rating.objects.get(recipe=recipe, session_id=request.session.session_key)
+            user_rating = rating.rating
+        except Rating.DoesNotExist:
+            pass
+    
+    context = {
+        'recipe': recipe,
+        'user_rating': user_rating,
+    }
+    return render(request, 'recipes/recipe_detail.html', context)
+
+
 @require_http_methods(["GET"])
 def get_recipes(request):
     """Get all recipes with optional search"""

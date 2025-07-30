@@ -16,6 +16,7 @@ Preferred communication style: Simple, everyday language.
 - **Icons**: Font Awesome for consistent iconography
 - **Interactivity**: DOM manipulation with event handling and dynamic content rendering
 - **API Communication**: Fetch API for RESTful backend communication
+- **Navigation**: Page-based navigation with dedicated recipe detail pages
 
 ### Backend Architecture
 - **Framework**: Django 5.2.4 with Python 3.11
@@ -61,7 +62,10 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend Features (Vanilla JavaScript)
 - **Recipe Grid**: Responsive card-based recipe display with ratings and metadata
-- **Recipe Details Modal**: Complete recipe view with ingredients, instructions, and actions
+- **Recipe Details Pages**: Dedicated pages for each recipe with URL pattern /recipe/{recipe_id}
+  - 3-column grid layout: ingredients (1 column), instructions (2 columns)
+  - Image gallery at the top
+  - Ratings, date created, cook time, and servings displayed under title
 - **Add Recipe Modal**: URL-based recipe import with real-time scraping feedback
 - **Shopping List Sidebar**: Dynamic ingredient aggregation with pricing and management
 - **Rating System**: Interactive star-based rating with immediate feedback
@@ -119,5 +123,8 @@ Preferred communication style: Simple, everyday language.
 - ✓ Revision history feature implemented with automatic change tracking
 - ✓ Recipe import flow working with preview/edit functionality
 - ✓ All recipe modifications now create revision snapshots
+- ✓ Transformed recipe display from modals to dedicated pages with URL pattern /recipe/{recipe_id}
+- ✓ Implemented 3-column grid layout for recipe details (ingredients 1 col, instructions 2 cols)
+- ✓ Added image gallery, ratings, date created, cook time, and servings display on recipe pages
 
-The application now runs as a pure Django web application with server-side rendering, vanilla JavaScript for client-side interactivity, and comprehensive revision history tracking for all recipes.
+The application now runs as a pure Django web application with server-side rendering, vanilla JavaScript for client-side interactivity, comprehensive revision history tracking, and dedicated recipe detail pages.

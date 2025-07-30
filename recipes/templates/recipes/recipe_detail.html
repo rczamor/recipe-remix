@@ -1,0 +1,396 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ recipe.title }} - Family Recipe Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .recipe-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .recipe-gallery img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .recipe-gallery img:hover {
+            transform: scale(1.05);
+        }
+        .main-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <a href="/" class="flex items-center space-x-3 text-gray-800 hover:text-orange-600">
+                    <i class="fas fa-arrow-left"></i>
+                    <h1 class="text-2xl font-bold">Back to Recipes</h1>
+                </a>
+                <div class="flex space-x-4">
+                    <button onclick="cloneRecipe({{ recipe.id }})" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                        <i class="fas fa-copy mr-2"></i>Clone Recipe
+                    </button>
+                    <button onclick="showRevisionHistory({{ recipe.id }})" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        <i class="fas fa-history mr-2"></i>View History
+                    </button>
+                    <button onclick="deleteRecipe({{ recipe.id }})" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        <i class="fas fa-trash mr-2"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Image Gallery -->
+        {% if recipe.image_url %}
+        <div class="mb-8">
+            <img id="mainImage" src="{{ recipe.image_url }}" alt="{{ recipe.title }}" class="main-image mb-4">
+            <div class="recipe-gallery">
+                <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}" onclick="setMainImage('{{ recipe.image_url }}')">
+                <!-- Add more images here if available -->
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recipe Title and Meta Info -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h1 class="text-4xl font-bold mb-4">{{ recipe.title }}</h1>
+            
+            <!-- Meta information under title -->
+            <div class="flex flex-wrap items-center gap-6 text-gray-600 mb-6">
+                <!-- Ratings -->
+                <div class="flex items-center">
+                    <div class="flex mr-2">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= recipe.average_rating %}
+                                <i class="fas fa-star text-yellow-400"></i>
+                            {% else %}
+                                <i class="fas fa-star text-gray-300"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span>{{ recipe.average_rating|floatformat:1 }} ({{ recipe.rating_count }} reviews)</span>
+                </div>
+                
+                <!-- Created Date -->
+                <div class="flex items-center">
+                    <i class="fas fa-calendar mr-2"></i>
+                    <span>Created {{ recipe.created_at|date:"F j, Y" }}</span>
+                </div>
+                
+                <!-- Cook Time -->
+                {% if recipe.prep_time_minutes or recipe.cook_time_minutes %}
+                <div class="flex items-center">
+                    <i class="fas fa-clock mr-2"></i>
+                    <span>
+                        {% if recipe.prep_time_minutes %}Prep: {{ recipe.prep_time_minutes }} min{% endif %}
+                        {% if recipe.prep_time_minutes and recipe.cook_time_minutes %} | {% endif %}
+                        {% if recipe.cook_time_minutes %}Cook: {{ recipe.cook_time_minutes }} min{% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                
+                <!-- Servings -->
+                {% if recipe.servings %}
+                <div class="flex items-center">
+                    <i class="fas fa-users mr-2"></i>
+                    <span>Serves {{ recipe.servings }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            {% if recipe.description %}
+            <p class="text-gray-700 mb-4">{{ recipe.description }}</p>
+            {% endif %}
+
+            <!-- Rating Section -->
+            <div class="border-t pt-4">
+                <span class="text-sm text-gray-600">Rate this recipe:</span>
+                <div class="flex items-center space-x-2 mt-2">
+                    {% for i in "12345" %}
+                        <i class="fas fa-star cursor-pointer text-3xl star-rating text-gray-300 hover:text-yellow-400" 
+                           data-rating="{{ forloop.counter }}"
+                           onclick="rateRecipe({{ recipe.id }}, {{ forloop.counter }})"></i>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-3 gap-8">
+            <!-- Ingredients (1 column) -->
+            <div class="col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold">Ingredients</h2>
+                        <button onclick="addAllToShoppingList()" class="text-green-600 hover:text-green-700">
+                            <i class="fas fa-shopping-cart mr-1"></i>Add All
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        {% for ingredient in recipe.ingredients.all %}
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                            <input type="checkbox" class="ingredient-checkbox" data-ingredient-id="{{ ingredient.id }}">
+                            <div class="flex-1">
+                                <span class="font-medium">{{ ingredient.quantity }}</span>
+                                <span>{{ ingredient.name }}</span>
+                                {% if ingredient.brand %}
+                                <div class="text-sm text-gray-600">{{ ingredient.brand }}</div>
+                                {% endif %}
+                                {% if ingredient.price %}
+                                <div class="text-sm text-gray-600">${{ ingredient.price }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button onclick="addSelectedToShoppingList()" class="w-full mt-4 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Add Selected to List
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instructions (2 columns) -->
+            <div class="col-span-2">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-semibold mb-4">Instructions</h2>
+                    <div class="space-y-6">
+                        {% for instruction in recipe.instructions.all %}
+                        <div class="flex space-x-4">
+                            <div class="flex-shrink-0 w-10 h-10 bg-orange-500 text-white rounded-full flex items-center justify-center font-semibold">
+                                {{ forloop.counter }}
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-gray-800">{{ instruction.description }}</p>
+                                {% if instruction.timeframe %}
+                                <span class="text-sm text-gray-600 mt-1 inline-block">
+                                    <i class="fas fa-clock mr-1"></i>{{ instruction.timeframe }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Additional Info -->
+                {% if recipe.notes %}
+                <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                    <h3 class="text-xl font-semibold mb-3">Notes</h3>
+                    <p class="text-gray-700">{{ recipe.notes }}</p>
+                </div>
+                {% endif %}
+
+                {% if recipe.source_url %}
+                <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                    <h3 class="text-xl font-semibold mb-3">Recipe Source</h3>
+                    <a href="{{ recipe.source_url }}" target="_blank" class="text-blue-600 hover:underline">
+                        <i class="fas fa-external-link-alt mr-2"></i>View Original Recipe
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <!-- Clone Modal -->
+    <div id="cloneModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+        <div id="cloneModalContent" class="mx-4 max-h-[90vh] overflow-y-auto">
+            <!-- Clone form will be populated here -->
+        </div>
+    </div>
+
+    <!-- Revision Modal -->
+    <div id="revisionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div id="revisionContent">
+                <!-- Revision history will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-60 space-y-2"></div>
+
+    <script>
+        // Set main image
+        function setMainImage(url) {
+            document.getElementById('mainImage').src = url;
+        }
+
+        // Rating functionality
+        function rateRecipe(recipeId, rating) {
+            fetch(`/api/recipes/${recipeId}/rate/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ rating })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showToast('Rating submitted successfully!', 'success');
+                // Update stars display
+                updateStarDisplay(rating);
+            })
+            .catch(error => {
+                showToast('Failed to submit rating', 'error');
+            });
+        }
+
+        function updateStarDisplay(rating) {
+            const stars = document.querySelectorAll('.star-rating');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('text-gray-300');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-300');
+                }
+            });
+        }
+
+        // Shopping list functionality
+        function addAllToShoppingList() {
+            const checkboxes = document.querySelectorAll('.ingredient-checkbox');
+            const ingredientIds = Array.from(checkboxes).map(cb => cb.dataset.ingredientId);
+            addToShoppingList(ingredientIds);
+        }
+
+        function addSelectedToShoppingList() {
+            const checkboxes = document.querySelectorAll('.ingredient-checkbox:checked');
+            const ingredientIds = Array.from(checkboxes).map(cb => cb.dataset.ingredientId);
+            if (ingredientIds.length === 0) {
+                showToast('Please select ingredients to add', 'error');
+                return;
+            }
+            addToShoppingList(ingredientIds);
+        }
+
+        function addToShoppingList(ingredientIds) {
+            // In a real app, this would sync with the backend
+            const existing = JSON.parse(localStorage.getItem('shoppingList') || '[]');
+            const updated = [...new Set([...existing, ...ingredientIds])];
+            localStorage.setItem('shoppingList', JSON.stringify(updated));
+            showToast(`${ingredientIds.length} ingredients added to shopping list`, 'success');
+        }
+
+        // Clone recipe
+        function cloneRecipe(recipeId) {
+            window.location.href = `/recipe/${recipeId}/clone`;
+        }
+
+        // Delete recipe
+        function deleteRecipe(recipeId) {
+            if (!confirm('Are you sure you want to delete this recipe?')) return;
+            
+            fetch(`/api/recipes/${recipeId}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    throw new Error('Failed to delete');
+                }
+            })
+            .catch(error => {
+                showToast('Failed to delete recipe', 'error');
+            });
+        }
+
+        // Show revision history
+        function showRevisionHistory(recipeId) {
+            fetch(`/api/recipes/${recipeId}/revisions/`)
+                .then(response => response.json())
+                .then(data => {
+                    const content = renderRevisionHistory(data);
+                    document.getElementById('revisionContent').innerHTML = content;
+                    document.getElementById('revisionModal').classList.remove('hidden');
+                    document.getElementById('revisionModal').classList.add('flex');
+                });
+        }
+
+        function renderRevisionHistory(data) {
+            if (data.revisions.length === 0) {
+                return '<p class="text-gray-500">No revision history available.</p>';
+            }
+            
+            return `
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Revision History</h2>
+                    <button onclick="closeRevisionModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    ${data.revisions.map(rev => `
+                        <div class="border rounded-lg p-4 hover:bg-gray-50">
+                            <h3 class="font-semibold">Revision ${rev.revision_number}</h3>
+                            <p class="text-gray-600">${rev.change_summary}</p>
+                            <p class="text-sm text-gray-500">${new Date(rev.created_at).toLocaleString()}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function closeRevisionModal() {
+            document.getElementById('revisionModal').classList.add('hidden');
+            document.getElementById('revisionModal').classList.remove('flex');
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500';
+            toast.className = `${bgColor} text-white px-4 py-2 rounded-lg shadow-lg`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // CSRF token helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>
