@@ -1,14 +1,16 @@
 import json
 from decimal import Decimal
+from datetime import datetime, timedelta
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Avg, Count
 from django.db import transaction
-from .models import Recipe, Ingredient, Instruction, Rating, RecipeRevision, ChatMessage
+from .models import Recipe, Ingredient, Instruction, Rating, RecipeRevision, ChatMessage, MealPlan, ShoppingList, ShoppingListItem
 from .services import RecipeScrapingService, create_recipe_revision
 from .ai_assistant import RecipeAssistant
+from .meal_planning_service import MealPlanningService
 
 
 def home(request):
@@ -713,6 +715,252 @@ def clear_chat(request):
         return JsonResponse({
             'message': f'Cleared {deleted_count} messages',
             'deleted_count': deleted_count
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# Meal Planning Views
+@csrf_exempt
+@require_http_methods(["POST"])
+def add_to_meal_plan(request):
+    """Add a recipe to the meal plan"""
+    try:
+        data = json.loads(request.body)
+        recipe_id = data.get('recipe_id')
+        date_str = data.get('date')
+        meal_type = data.get('meal_type', 'dinner')
+        notes = data.get('notes', '')
+        
+        if not recipe_id or not date_str:
+            return JsonResponse({'error': 'recipe_id and date are required'}, status=400)
+        
+        # Get or create session key
+        if not request.session.session_key:
+            request.session.create()
+        session_id = request.session.session_key
+        
+        # Parse date
+        from datetime import datetime
+        meal_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        
+        # Add to meal plan
+        service = MealPlanningService()
+        meal_plan = service.add_recipe_to_meal_plan(
+            session_id=session_id,
+            recipe_id=recipe_id,
+            date=meal_date,
+            meal_type=meal_type,
+            notes=notes
+        )
+        
+        return JsonResponse({
+            'id': meal_plan.id,
+            'recipe_id': meal_plan.recipe.id,
+            'recipe_title': meal_plan.recipe.title,
+            'date': meal_plan.date.isoformat(),
+            'meal_type': meal_plan.meal_type,
+            'notes': meal_plan.notes
+        })
+        
+    except Recipe.DoesNotExist:
+        return JsonResponse({'error': 'Recipe not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def remove_from_meal_plan(request, meal_plan_id):
+    """Remove a recipe from the meal plan"""
+    try:
+        # Get session key
+        if not request.session.session_key:
+            return JsonResponse({'error': 'No meal plan found'}, status=404)
+        session_id = request.session.session_key
+        
+        # Remove from meal plan
+        service = MealPlanningService()
+        success = service.remove_from_meal_plan(session_id, meal_plan_id)
+        
+        if success:
+            return JsonResponse({'message': 'Removed from meal plan'})
+        else:
+            return JsonResponse({'error': 'Meal plan not found'}, status=404)
+            
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+def get_week_meal_plan(request):
+    """Get meal plans for a week"""
+    try:
+        week_start = request.GET.get('week_start')
+        
+        if not week_start:
+            from datetime import datetime
+            # Default to current week
+            today = datetime.now().date()
+            week_start = today - timedelta(days=today.weekday())
+        else:
+            from datetime import datetime
+            week_start = datetime.strptime(week_start, '%Y-%m-%d').date()
+        
+        # Get or create session key
+        if not request.session.session_key:
+            request.session.create()
+        session_id = request.session.session_key
+        
+        # Get meal plans
+        service = MealPlanningService()
+        week_data = service.get_week_meal_plans(session_id, week_start)
+        
+        # Format response
+        formatted_data = {}
+        for date_str, meal_plans in week_data.items():
+            formatted_data[date_str] = [
+                {
+                    'id': mp.id,
+                    'recipe_id': mp.recipe.id,
+                    'recipe_title': mp.recipe.title,
+                    'recipe_image': mp.recipe.image_url,
+                    'meal_type': mp.meal_type,
+                    'notes': mp.notes,
+                    'prep_time': mp.recipe.prep_time_minutes,
+                    'cook_time': mp.recipe.cook_time_minutes
+                }
+                for mp in meal_plans
+            ]
+        
+        return JsonResponse({
+            'week_start': week_start.isoformat(),
+            'meal_plans': formatted_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def generate_shopping_list(request):
+    """Generate a shopping list from a week's meal plans"""
+    try:
+        data = json.loads(request.body)
+        week_start = data.get('week_start')
+        
+        if not week_start:
+            return JsonResponse({'error': 'week_start is required'}, status=400)
+        
+        from datetime import datetime
+        start_date = datetime.strptime(week_start, '%Y-%m-%d').date()
+        end_date = start_date + timedelta(days=6)
+        
+        # Get or create session key
+        if not request.session.session_key:
+            request.session.create()
+        session_id = request.session.session_key
+        
+        # Generate shopping list
+        service = MealPlanningService()
+        shopping_list = service.generate_weekly_shopping_list(
+            session_id=session_id,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        # Format response
+        items = [
+            {
+                'id': item.id,
+                'name': item.name,
+                'quantity': item.quantity,
+                'category': item.category,
+                'notes': item.notes,
+                'is_purchased': item.is_purchased
+            }
+            for item in shopping_list.items.all()
+        ]
+        
+        return JsonResponse({
+            'id': shopping_list.id,
+            'name': shopping_list.name,
+            'start_date': shopping_list.start_date.isoformat(),
+            'end_date': shopping_list.end_date.isoformat(),
+            'items': items
+        })
+        
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+def get_shopping_lists(request):
+    """Get all shopping lists for the session"""
+    try:
+        # Get or create session key
+        if not request.session.session_key:
+            request.session.create()
+        session_id = request.session.session_key
+        
+        # Get shopping lists
+        shopping_lists = ShoppingList.objects.filter(
+            session_id=session_id
+        ).order_by('-created_at')
+        
+        # Format response
+        lists_data = []
+        for sl in shopping_lists:
+            lists_data.append({
+                'id': sl.id,
+                'name': sl.name,
+                'start_date': sl.start_date.isoformat(),
+                'end_date': sl.end_date.isoformat(),
+                'created_at': sl.created_at.isoformat(),
+                'item_count': sl.items.count(),
+                'purchased_count': sl.items.filter(is_purchased=True).count()
+            })
+        
+        return JsonResponse({'shopping_lists': lists_data})
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["PATCH"])
+def update_shopping_item(request, item_id):
+    """Update a shopping list item (mark as purchased, etc)"""
+    try:
+        data = json.loads(request.body)
+        
+        # Get session key
+        if not request.session.session_key:
+            return JsonResponse({'error': 'No shopping list found'}, status=404)
+        session_id = request.session.session_key
+        
+        # Update item
+        item = get_object_or_404(
+            ShoppingListItem, 
+            id=item_id, 
+            shopping_list__session_id=session_id
+        )
+        
+        if 'is_purchased' in data:
+            item.is_purchased = data['is_purchased']
+        if 'notes' in data:
+            item.notes = data['notes']
+        
+        item.save()
+        
+        return JsonResponse({
+            'id': item.id,
+            'is_purchased': item.is_purchased,
+            'notes': item.notes
         })
         
     except Exception as e:

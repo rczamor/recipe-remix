@@ -13,7 +13,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.utilities import SerpAPIWrapper
 from langchain.schema import HumanMessage, AIMessage, SystemMessage
-from .models import Recipe, Ingredient, Instruction, ChatMessage
+from .models import Recipe, Ingredient, Instruction, ChatMessage, MealPlan, ShoppingList, ShoppingListItem
 from .services import RecipeScrapingService, create_recipe_revision
 
 

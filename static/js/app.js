@@ -110,7 +110,7 @@ class RecipeApp {
         const rating = parseFloat(recipe.average_rating || 0);
 
         return `
-            <a href="/recipe/${recipe.id}/" class="recipe-card bg-white rounded-xl shadow-md overflow-hidden block hover:shadow-lg transition-shadow">
+            <a href="/recipe/${recipe.id}/" class="recipe-card bg-white rounded-xl shadow-md overflow-hidden block hover:shadow-lg transition-shadow" draggable="true" data-recipe-id="${recipe.id}">
                 <img
                     src="${recipe.image_url || 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400&h=300&fit=crop'}"
                     alt="${recipe.title}"

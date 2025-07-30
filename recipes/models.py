@@ -134,3 +134,57 @@ class ChatMessage(models.Model):
         
     def __str__(self):
         return f"{self.role}: {self.content[:50]}..."
+
+
+class MealPlan(models.Model):
+    MEAL_TYPE_CHOICES = [
+        ('breakfast', 'Breakfast'),
+        ('lunch', 'Lunch'),
+        ('dinner', 'Dinner'),
+        ('snack', 'Snack'),
+    ]
+    
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='meal_plans')
+    date = models.DateField()
+    meal_type = models.CharField(max_length=10, choices=MEAL_TYPE_CHOICES, default='dinner')
+    session_id = models.CharField(max_length=40)  # For anonymous meal planning
+    created_at = models.DateTimeField(default=timezone.now)
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['date', 'meal_type']
+        unique_together = ['recipe', 'date', 'meal_type', 'session_id']
+        
+    def __str__(self):
+        return f"{self.recipe.title} on {self.date} ({self.meal_type})"
+
+
+class ShoppingList(models.Model):
+    session_id = models.CharField(max_length=40)
+    name = models.CharField(max_length=200, default='Weekly Shopping List')
+    start_date = models.DateField()
+    end_date = models.DateField()
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.name} ({self.start_date} to {self.end_date})"
+
+
+class ShoppingListItem(models.Model):
+    shopping_list = models.ForeignKey(ShoppingList, on_delete=models.CASCADE, related_name='items')
+    name = models.CharField(max_length=200)
+    quantity = models.CharField(max_length=100)
+    category = models.CharField(max_length=100, blank=True)  # Produce, Dairy, etc.
+    is_purchased = models.BooleanField(default=False)
+    price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    notes = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['category', 'order', 'name']
+        
+    def __str__(self):
+        return f"{self.quantity} {self.name}"
