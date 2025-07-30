@@ -6,8 +6,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Avg, Count
 from django.db import transaction
-from .models import Recipe, Ingredient, Instruction, Rating
-from .services import RecipeScrapingService
+from .models import Recipe, Ingredient, Instruction, Rating, RecipeRevision
+from .services import RecipeScrapingService, create_recipe_revision
 
 
 def home(request):
@@ -227,6 +227,9 @@ def create_recipe(request):
                 order=inst_data.get('order', idx + 1)
             )
         
+        # Create initial revision
+        create_recipe_revision(recipe, "Initial recipe creation")
+        
         # Return the created recipe
         return JsonResponse({
             'id': recipe.id,
@@ -306,6 +309,9 @@ def clone_recipe(request, recipe_id):
                     order=i + 1
                 )
         
+        # Create initial revision for cloned recipe
+        create_recipe_revision(cloned_recipe, f"Cloned from '{original_recipe.title}'")
+        
         # Return complete cloned recipe data
         return get_recipe(request, cloned_recipe.id)
         
@@ -361,6 +367,17 @@ def update_recipe(request, recipe_id):
                         timeframe=inst_data.get('timeframe', ''),
                         order=i + 1
                     )
+        
+        # Create revision with change summary
+        change_summary = f"Updated recipe"
+        if 'title' in data:
+            change_summary = f"Updated title and other fields"
+        elif 'ingredients' in data:
+            change_summary = f"Updated ingredients"
+        elif 'instructions' in data:
+            change_summary = f"Updated instructions"
+            
+        create_recipe_revision(recipe, change_summary)
         
         # Return updated recipe data
         return get_recipe(request, recipe.id)
@@ -457,3 +474,60 @@ def get_shopping_list(request):
         return JsonResponse({'error': 'Invalid JSON data'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+def get_recipe_revisions(request, recipe_id):
+    """Get all revisions for a recipe"""
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    revisions = recipe.revisions.all()
+    
+    revisions_data = []
+    for revision in revisions:
+        revisions_data.append({
+            'id': revision.id,
+            'revision_number': revision.revision_number,
+            'title': revision.title,
+            'description': revision.description,
+            'change_summary': revision.change_summary,
+            'created_at': revision.created_at.isoformat(),
+            'ingredients_count': len(revision.ingredients_data),
+            'instructions_count': len(revision.instructions_data),
+        })
+    
+    return JsonResponse({
+        'recipe_id': recipe.id,
+        'current_title': recipe.title,
+        'revisions': revisions_data
+    })
+
+
+@require_http_methods(["GET"])
+def get_revision_details(request, recipe_id, revision_number):
+    """Get details of a specific revision"""
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    revision = get_object_or_404(RecipeRevision, recipe=recipe, revision_number=revision_number)
+    
+    return JsonResponse({
+        'id': revision.id,
+        'recipe_id': recipe.id,
+        'revision_number': revision.revision_number,
+        'title': revision.title,
+        'description': revision.description,
+        'image_url': revision.image_url,
+        'source_url': revision.source_url,
+        'prep_time_minutes': revision.prep_time_minutes,
+        'cook_time_minutes': revision.cook_time_minutes,
+        'servings': revision.servings,
+        'difficulty': revision.difficulty,
+        'category': revision.category,
+        'tags': revision.tags,
+        'notes': revision.notes,
+        'is_favorite': revision.is_favorite,
+        'is_cloned': revision.is_cloned,
+        'original_recipe_id': revision.original_recipe_id,
+        'change_summary': revision.change_summary,
+        'created_at': revision.created_at.isoformat(),
+        'ingredients': revision.ingredients_data,
+        'instructions': revision.instructions_data,
+    })

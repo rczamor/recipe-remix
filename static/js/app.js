@@ -220,6 +220,9 @@ class RecipeApp {
                         <button onclick="app.deleteRecipe(${recipe.id})" class="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors font-medium">
                             <i class="fas fa-trash mr-2"></i>Delete Recipe
                         </button>
+                        <button onclick="app.showRevisionHistory(${recipe.id})" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium">
+                            <i class="fas fa-history mr-2"></i>View History
+                        </button>
                         <button onclick="app.addAllIngredientsToShoppingList()" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors font-medium">
                             <i class="fas fa-shopping-cart mr-2"></i>Add to Shopping List
                         </button>
@@ -1113,6 +1116,131 @@ class RecipeApp {
                 }
             }, 300);
         }, 3000);
+    }
+
+    async showRevisionHistory(recipeId) {
+        try {
+            const response = await fetch(`/api/recipes/${recipeId}/revisions/`);
+            if (!response.ok) throw new Error('Failed to load revision history');
+            
+            const data = await response.json();
+            const { recipe_id, current_title, revisions } = data;
+            
+            const modalContent = `
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Revision History: ${current_title}</h2>
+                    <button onclick="app.hideRevisionModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                ${revisions.length === 0 ? `
+                    <p class="text-gray-500 text-center py-8">No revision history available for this recipe.</p>
+                ` : `
+                    <div class="space-y-4">
+                        ${revisions.map(revision => `
+                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer" 
+                                 onclick="app.showRevisionDetails(${recipe_id}, ${revision.revision_number})">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-lg">Revision ${revision.revision_number}</h3>
+                                        <p class="text-gray-600 mt-1">${revision.title}</p>
+                                        ${revision.change_summary ? `
+                                            <p class="text-sm text-gray-500 mt-2">
+                                                <i class="fas fa-info-circle mr-1"></i>${revision.change_summary}
+                                            </p>
+                                        ` : ''}
+                                        <div class="flex items-center space-x-4 text-sm text-gray-500 mt-2">
+                                            <span><i class="fas fa-calendar mr-1"></i>${new Date(revision.created_at).toLocaleDateString()}</span>
+                                            <span><i class="fas fa-utensils mr-1"></i>${revision.ingredients_count} ingredients</span>
+                                            <span><i class="fas fa-list mr-1"></i>${revision.instructions_count} steps</span>
+                                        </div>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            `;
+            
+            document.getElementById('revisionContent').innerHTML = modalContent;
+            document.getElementById('revisionModal').classList.add('show');
+            
+        } catch (error) {
+            this.showToast('Failed to load revision history', 'error');
+            console.error('Error loading revisions:', error);
+        }
+    }
+
+    hideRevisionModal() {
+        document.getElementById('revisionModal').classList.remove('show');
+    }
+
+    async showRevisionDetails(recipeId, revisionNumber) {
+        try {
+            const response = await fetch(`/api/recipes/${recipeId}/revisions/${revisionNumber}/`);
+            if (!response.ok) throw new Error('Failed to load revision details');
+            
+            const revision = await response.json();
+            
+            const modalContent = `
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold">Revision ${revision.revision_number}: ${revision.title}</h2>
+                        <p class="text-gray-600 mt-1">Created on ${new Date(revision.created_at).toLocaleString()}</p>
+                    </div>
+                    <button onclick="app.showRevisionHistory(${recipeId})" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-arrow-left text-xl"></i> Back to History
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Recipe Details -->
+                    <div>
+                        <h3 class="font-semibold text-lg mb-3">Recipe Details</h3>
+                        <div class="space-y-2 text-sm">
+                            <p><strong>Description:</strong> ${revision.description || 'No description'}</p>
+                            <p><strong>Prep Time:</strong> ${revision.prep_time_minutes || 0} minutes</p>
+                            <p><strong>Cook Time:</strong> ${revision.cook_time_minutes || 0} minutes</p>
+                            <p><strong>Servings:</strong> ${revision.servings || 'Not specified'}</p>
+                            ${revision.change_summary ? `
+                                <p><strong>Change Summary:</strong> ${revision.change_summary}</p>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Ingredients -->
+                    <div>
+                        <h3 class="font-semibold text-lg mb-3">Ingredients</h3>
+                        <ul class="space-y-1 text-sm">
+                            ${revision.ingredients.map(ing => `
+                                <li>${ing.quantity} ${ing.name}${ing.brand ? ` (${ing.brand})` : ''}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Instructions -->
+                <div class="mt-6">
+                    <h3 class="font-semibold text-lg mb-3">Instructions</h3>
+                    <ol class="space-y-2">
+                        ${revision.instructions.map((inst, idx) => `
+                            <li class="flex space-x-3">
+                                <span class="font-semibold">${idx + 1}.</span>
+                                <span>${inst.description}${inst.timeframe ? ` (${inst.timeframe})` : ''}</span>
+                            </li>
+                        `).join('')}
+                    </ol>
+                </div>
+            `;
+            
+            document.getElementById('revisionContent').innerHTML = modalContent;
+            
+        } catch (error) {
+            this.showToast('Failed to load revision details', 'error');
+            console.error('Error loading revision details:', error);
+        }
     }
 }
 

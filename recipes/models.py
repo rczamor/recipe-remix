@@ -82,3 +82,35 @@ class Rating(models.Model):
 
     def __str__(self):
         return f"{self.rating} stars for {self.recipe.title}"
+
+
+class RecipeRevision(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='revisions')
+    revision_number = models.PositiveIntegerField()
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    image_url = models.URLField(blank=True)
+    source_url = models.URLField(blank=True)
+    prep_time_minutes = models.PositiveIntegerField(null=True, blank=True)
+    cook_time_minutes = models.PositiveIntegerField(null=True, blank=True)
+    servings = models.PositiveIntegerField(null=True, blank=True)
+    difficulty = models.CharField(max_length=10, default='medium')
+    category = models.CharField(max_length=100, blank=True)
+    tags = models.CharField(max_length=200, blank=True)
+    notes = models.TextField(blank=True)
+    is_favorite = models.BooleanField(default=False)
+    is_cloned = models.BooleanField(default=False)
+    original_recipe_id = models.IntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    change_summary = models.CharField(max_length=500, blank=True)
+    
+    # Store ingredients and instructions as JSON
+    ingredients_data = models.JSONField(default=list)
+    instructions_data = models.JSONField(default=list)
+    
+    class Meta:
+        ordering = ['-revision_number']
+        unique_together = ['recipe', 'revision_number']
+        
+    def __str__(self):
+        return f"{self.recipe.title} - Revision {self.revision_number}"

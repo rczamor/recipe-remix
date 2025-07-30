@@ -4,6 +4,60 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from typing import Dict, List, Optional, Any
+from .models import Recipe, RecipeRevision, Ingredient, Instruction
+
+
+def create_recipe_revision(recipe: Recipe, change_summary: str = "") -> RecipeRevision:
+    """Create a revision of the recipe with all its current data"""
+    
+    # Get the next revision number
+    last_revision = recipe.revisions.order_by('-revision_number').first()
+    revision_number = (last_revision.revision_number + 1) if last_revision else 1
+    
+    # Create ingredients data
+    ingredients_data = []
+    for ingredient in recipe.ingredients.all():
+        ingredients_data.append({
+            'name': ingredient.name,
+            'quantity': ingredient.quantity,
+            'brand': ingredient.brand,
+            'price': str(ingredient.price) if ingredient.price else None,
+            'order': ingredient.order
+        })
+    
+    # Create instructions data
+    instructions_data = []
+    for instruction in recipe.instructions.all():
+        instructions_data.append({
+            'description': instruction.description,
+            'timeframe': instruction.timeframe,
+            'order': instruction.order
+        })
+    
+    # Create the revision
+    revision = RecipeRevision.objects.create(
+        recipe=recipe,
+        revision_number=revision_number,
+        title=recipe.title,
+        description=recipe.description,
+        image_url=recipe.image_url,
+        source_url=recipe.source_url,
+        prep_time_minutes=recipe.prep_time_minutes,
+        cook_time_minutes=recipe.cook_time_minutes,
+        servings=recipe.servings,
+        difficulty=recipe.difficulty,
+        category=recipe.category,
+        tags=recipe.tags,
+        notes=recipe.notes,
+        is_favorite=recipe.is_favorite,
+        is_cloned=recipe.is_cloned,
+        original_recipe_id=recipe.original_recipe.id if recipe.original_recipe else None,
+        ingredients_data=ingredients_data,
+        instructions_data=instructions_data,
+        change_summary=change_summary
+    )
+    
+    return revision
 
 
 class RecipeScrapingService:

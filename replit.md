@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a full-stack family recipe management web application built with Django and PostgreSQL. The application allows users to scrape recipes from URLs, store them in structured format, rate recipes, clone and modify them, and generate shopping lists based on ingredients. The app is publicly viewable without authentication and features an elegant, user-friendly interface built with Tailwind CSS and vanilla JavaScript.
+This is a full-stack family recipe management web application built with Django and PostgreSQL. The application allows users to scrape recipes from URLs, store them in structured format, rate recipes, clone and modify them, generate shopping lists based on ingredients, and track revision history for each recipe. The app is publicly viewable without authentication and features an elegant, user-friendly interface built with Tailwind CSS and vanilla JavaScript.
 
 ## User Preferences
 
@@ -49,6 +49,7 @@ Preferred communication style: Simple, everyday language.
 - **Ingredient**: Recipe ingredients with quantity, name, brand, price, and ordering
 - **Instruction**: Step-by-step cooking instructions with description, timing, and ordering  
 - **Rating**: User ratings for recipes using session-based anonymous rating system
+- **RecipeRevision**: Complete revision history for each recipe, storing snapshots of all recipe data with change summaries
 
 ### Backend Services (Django Views & Services)
 - **Recipe Management**: Full CRUD operations with search functionality
@@ -56,6 +57,7 @@ Preferred communication style: Simple, everyday language.
 - **Rating System**: Anonymous session-based recipe rating with automatic average calculation
 - **Shopping Lists**: Dynamic ingredient aggregation with cost calculation
 - **Recipe Cloning**: Full recipe duplication with editing capabilities
+- **Revision History**: Automatic tracking of all recipe changes with detailed snapshots and change summaries
 
 ### Frontend Features (Vanilla JavaScript)
 - **Recipe Grid**: Responsive card-based recipe display with ratings and metadata
@@ -63,6 +65,7 @@ Preferred communication style: Simple, everyday language.
 - **Add Recipe Modal**: URL-based recipe import with real-time scraping feedback
 - **Shopping List Sidebar**: Dynamic ingredient aggregation with pricing and management
 - **Rating System**: Interactive star-based rating with immediate feedback
+- **Revision History Modal**: View all recipe revisions with detailed change information and timestamps
 
 ## Data Flow
 
@@ -107,11 +110,14 @@ Preferred communication style: Simple, everyday language.
 - **DEBUG**: Django debug mode (development vs production)
 - **SECRET_KEY**: Django security key for sessions and CSRF
 
-### Current Status (July 24, 2025)
+### Current Status (July 30, 2025)
 - ✓ Successfully migrated from Node.js/React to Django
 - ✓ Django server running properly on port 5000
 - ✓ Database migrations applied successfully
 - ✓ Application serving homepage correctly
 - ✓ All Django checks passing without issues
+- ✓ Revision history feature implemented with automatic change tracking
+- ✓ Recipe import flow working with preview/edit functionality
+- ✓ All recipe modifications now create revision snapshots
 
-The application now runs as a pure Django web application with server-side rendering and vanilla JavaScript for client-side interactivity.
+The application now runs as a pure Django web application with server-side rendering, vanilla JavaScript for client-side interactivity, and comprehensive revision history tracking for all recipes.
