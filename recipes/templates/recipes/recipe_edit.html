@@ -1,0 +1,308 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit {{ recipe.title }} - Family Recipe Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <a href="/recipe/{{ recipe.id }}/" class="flex items-center space-x-3 text-gray-800 hover:text-orange-600">
+                    <i class="fas fa-arrow-left"></i>
+                    <h1 class="text-2xl font-bold">Back to Recipe</h1>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold mb-8">Edit Recipe</h1>
+            
+            <form id="editRecipeForm" class="space-y-6">
+                <!-- Basic Information -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Basic Information</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Recipe Title *</label>
+                            <input type="text" id="title" name="title" value="{{ recipe.title }}" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="description" name="description" rows="3"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">{{ recipe.description }}</textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="prep_time" class="block text-sm font-medium text-gray-700 mb-1">Prep Time (minutes)</label>
+                                <input type="number" id="prep_time" name="prep_time_minutes" value="{{ recipe.prep_time_minutes|default:'' }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                            
+                            <div>
+                                <label for="cook_time" class="block text-sm font-medium text-gray-700 mb-1">Cook Time (minutes)</label>
+                                <input type="number" id="cook_time" name="cook_time_minutes" value="{{ recipe.cook_time_minutes|default:'' }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                            
+                            <div>
+                                <label for="servings" class="block text-sm font-medium text-gray-700 mb-1">Servings</label>
+                                <input type="number" id="servings" name="servings" value="{{ recipe.servings|default:'' }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="image_url" class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                            <input type="url" id="image_url" name="image_url" value="{{ recipe.image_url|default:'' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Ingredients -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Ingredients</h2>
+                    
+                    <div id="ingredientsContainer" class="space-y-3">
+                        {% for ingredient in recipe.ingredients.all %}
+                        <div class="ingredient-row flex gap-3 items-start">
+                            <input type="text" name="ingredient_quantity[]" value="{{ ingredient.quantity }}" placeholder="Quantity"
+                                   class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <input type="text" name="ingredient_name[]" value="{{ ingredient.name }}" placeholder="Ingredient name" required
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <input type="text" name="ingredient_brand[]" value="{{ ingredient.brand|default:'' }}" placeholder="Brand (optional)"
+                                   class="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <input type="number" step="0.01" name="ingredient_price[]" value="{{ ingredient.price|default:'' }}" placeholder="Price"
+                                   class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <button type="button" onclick="removeIngredient(this)" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <button type="button" onclick="addIngredient()" class="mt-4 text-orange-600 hover:text-orange-700">
+                        <i class="fas fa-plus mr-2"></i>Add Ingredient
+                    </button>
+                </div>
+                
+                <!-- Instructions -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Instructions</h2>
+                    
+                    <div id="instructionsContainer" class="space-y-3">
+                        {% for instruction in recipe.instructions.all %}
+                        <div class="instruction-row flex gap-3 items-start">
+                            <span class="step-number bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-semibold">{{ forloop.counter }}</span>
+                            <textarea name="instruction_description[]" rows="2" placeholder="Describe this step" required
+                                      class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">{{ instruction.description }}</textarea>
+                            <input type="text" name="instruction_timeframe[]" value="{{ instruction.timeframe|default:'' }}" placeholder="Time (optional)"
+                                   class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <button type="button" onclick="removeInstruction(this)" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <button type="button" onclick="addInstruction()" class="mt-4 text-orange-600 hover:text-orange-700">
+                        <i class="fas fa-plus mr-2"></i>Add Instruction
+                    </button>
+                </div>
+                
+                <!-- Submit Buttons -->
+                <div class="flex gap-4">
+                    <button type="submit" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors font-medium">
+                        <i class="fas fa-save mr-2"></i>Save Changes
+                    </button>
+                    <a href="/recipe/{{ recipe.id }}/" class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors font-medium">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-60 space-y-2"></div>
+
+    <script>
+        // Add ingredient row
+        function addIngredient() {
+            const container = document.getElementById('ingredientsContainer');
+            const row = document.createElement('div');
+            row.className = 'ingredient-row flex gap-3 items-start';
+            row.innerHTML = `
+                <input type="text" name="ingredient_quantity[]" placeholder="Quantity"
+                       class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <input type="text" name="ingredient_name[]" placeholder="Ingredient name" required
+                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <input type="text" name="ingredient_brand[]" placeholder="Brand (optional)"
+                       class="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <input type="number" step="0.01" name="ingredient_price[]" placeholder="Price"
+                       class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <button type="button" onclick="removeIngredient(this)" class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        // Remove ingredient row
+        function removeIngredient(button) {
+            button.closest('.ingredient-row').remove();
+        }
+
+        // Add instruction row
+        function addInstruction() {
+            const container = document.getElementById('instructionsContainer');
+            const stepNumber = container.children.length + 1;
+            const row = document.createElement('div');
+            row.className = 'instruction-row flex gap-3 items-start';
+            row.innerHTML = `
+                <span class="step-number bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-semibold">${stepNumber}</span>
+                <textarea name="instruction_description[]" rows="2" placeholder="Describe this step" required
+                          class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
+                <input type="text" name="instruction_timeframe[]" placeholder="Time (optional)"
+                       class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <button type="button" onclick="removeInstruction(this)" class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        // Remove instruction row and update step numbers
+        function removeInstruction(button) {
+            const row = button.closest('.instruction-row');
+            row.remove();
+            updateStepNumbers();
+        }
+
+        // Update step numbers
+        function updateStepNumbers() {
+            const container = document.getElementById('instructionsContainer');
+            const rows = container.querySelectorAll('.instruction-row');
+            rows.forEach((row, index) => {
+                const stepNumber = row.querySelector('.step-number');
+                stepNumber.textContent = index + 1;
+            });
+        }
+
+        // Handle form submission
+        document.getElementById('editRecipeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            // Collect ingredients
+            const ingredients = [];
+            const quantities = formData.getAll('ingredient_quantity[]');
+            const names = formData.getAll('ingredient_name[]');
+            const brands = formData.getAll('ingredient_brand[]');
+            const prices = formData.getAll('ingredient_price[]');
+            
+            for (let i = 0; i < names.length; i++) {
+                if (names[i].trim()) {
+                    ingredients.push({
+                        quantity: quantities[i],
+                        name: names[i],
+                        brand: brands[i],
+                        price: prices[i] || null
+                    });
+                }
+            }
+            
+            // Collect instructions
+            const instructions = [];
+            const descriptions = formData.getAll('instruction_description[]');
+            const timeframes = formData.getAll('instruction_timeframe[]');
+            
+            for (let i = 0; i < descriptions.length; i++) {
+                if (descriptions[i].trim()) {
+                    instructions.push({
+                        description: descriptions[i],
+                        timeframe: timeframes[i]
+                    });
+                }
+            }
+            
+            // Prepare update data
+            const updateData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                prep_time_minutes: formData.get('prep_time_minutes') ? parseInt(formData.get('prep_time_minutes')) : null,
+                cook_time_minutes: formData.get('cook_time_minutes') ? parseInt(formData.get('cook_time_minutes')) : null,
+                servings: formData.get('servings') ? parseInt(formData.get('servings')) : null,
+                image_url: formData.get('image_url'),
+                ingredients: ingredients,
+                instructions: instructions
+            };
+            
+            try {
+                const response = await fetch(`/api/recipes/{{ recipe.id }}/update/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to update recipe');
+                
+                showToast('Recipe updated successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = `/recipe/{{ recipe.id }}/`;
+                }, 1000);
+                
+            } catch (error) {
+                showToast('Failed to update recipe. Please try again.', 'error');
+                console.error('Error:', error);
+            }
+        });
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500';
+            toast.className = `${bgColor} text-white px-4 py-2 rounded-lg shadow-lg`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // CSRF token helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

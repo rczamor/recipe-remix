@@ -35,6 +35,15 @@ def recipe_detail(request, recipe_id):
     return render(request, 'recipes/recipe_detail.html', context)
 
 
+def recipe_edit(request, recipe_id):
+    """Display the edit form for a recipe"""
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    context = {
+        'recipe': recipe,
+    }
+    return render(request, 'recipes/recipe_edit.html', context)
+
+
 @require_http_methods(["GET"])
 def get_recipes(request):
     """Get all recipes with optional search"""

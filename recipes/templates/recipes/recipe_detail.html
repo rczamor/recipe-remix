@@ -9,26 +9,32 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .recipe-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            display: flex;
             gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
         }
         .recipe-gallery img {
-            width: 100%;
-            height: 200px;
+            width: 150px;
+            height: 150px;
             object-fit: cover;
             border-radius: 0.5rem;
             cursor: pointer;
             transition: transform 0.2s;
+            border: 2px solid transparent;
         }
         .recipe-gallery img:hover {
             transform: scale(1.05);
+            border-color: #f97316;
         }
         .main-image {
             width: 100%;
-            height: 400px;
+            max-width: 600px;
+            height: 300px;
             object-fit: cover;
             border-radius: 0.5rem;
+            margin: 0 auto;
+            display: block;
         }
     </style>
 </head>
@@ -42,6 +48,9 @@
                     <h1 class="text-2xl font-bold">Back to Recipes</h1>
                 </a>
                 <div class="flex space-x-4">
+                    <a href="/recipe/{{ recipe.id }}/edit" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                        <i class="fas fa-edit mr-2"></i>Edit Recipe
+                    </a>
                     <button onclick="cloneRecipe({{ recipe.id }})" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
                         <i class="fas fa-copy mr-2"></i>Clone Recipe
                     </button>
@@ -57,12 +66,12 @@
     </header>
 
     <main class="container mx-auto px-4 py-8">
-        <!-- Image Gallery -->
+        <!-- Image Gallery - Only show if image exists -->
         {% if recipe.image_url %}
-        <div class="mb-8">
-            <img id="mainImage" src="{{ recipe.image_url }}" alt="{{ recipe.title }}" class="main-image mb-4">
+        <div class="mb-8 bg-white rounded-lg shadow-md p-6">
+            <img id="mainImage" src="{{ recipe.image_url }}" alt="{{ recipe.title }}" class="main-image">
             <div class="recipe-gallery">
-                <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}" onclick="setMainImage('{{ recipe.image_url }}')">
+                <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}" onclick="setMainImage('{{ recipe.image_url }}')" class="border-2 border-orange-500">
                 <!-- Add more images here if available -->
             </div>
         </div>
