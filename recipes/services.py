@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from typing import Dict, List, Optional, Any
 from .models import Recipe, RecipeRevision, Ingredient, Instruction
-from .recipe_cleaner import RecipeCleaningService
+from .recipe_cleaner import RecipeCleaner
 
 
 def create_recipe_revision(recipe: Recipe, change_summary: str = "") -> RecipeRevision:
@@ -68,7 +68,7 @@ class RecipeScrapingService:
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        self.cleaner = RecipeCleaningService()
+        self.cleaner = RecipeCleaner()
     
     def scrape_recipe(self, url: str, enable_cleaning: bool = True) -> Dict[str, Any]:
         """

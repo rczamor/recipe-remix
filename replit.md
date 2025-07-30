@@ -59,6 +59,12 @@ Preferred communication style: Simple, everyday language.
 - **Shopping Lists**: Dynamic ingredient aggregation with cost calculation
 - **Recipe Cloning**: Full recipe duplication with editing capabilities
 - **Revision History**: Automatic tracking of all recipe changes with detailed snapshots and change summaries
+- **Recipe Cleaning Service**: AI-powered recipe data cleaning using Grok LLM via Langchain
+  - Fixes spelling and grammar errors in descriptions
+  - Standardizes ingredient formats (e.g., "1 tsp" instead of "1 teaspoon")
+  - Makes instructions clear and concise
+  - Removes promotional content or irrelevant information
+  - Toggleable during recipe import (enabled by default)
 
 ### Frontend Features (Vanilla JavaScript)
 - **Recipe Grid**: Responsive card-based recipe display with ratings and metadata
@@ -131,5 +137,7 @@ Preferred communication style: Simple, everyday language.
 - ✓ AI-powered shopping list generation from weekly meal plans using Grok
 - ✓ Repositioned Edit button next to View History button for better UX
 - ✓ Fixed image gallery to only display when recipes have associated images
+- ✓ Integrated AI recipe cleaning service using Grok LLM via Langchain to fix errors in scraped recipes
+- ✓ Added toggle option for AI cleaning when importing recipes
 
-The application now runs as a pure Django web application with server-side rendering, vanilla JavaScript for client-side interactivity, comprehensive revision history tracking, dedicated recipe detail pages, AI-powered assistant, and meal planning features.
+The application now runs as a pure Django web application with server-side rendering, vanilla JavaScript for client-side interactivity, comprehensive revision history tracking, dedicated recipe detail pages, AI-powered assistant, meal planning features, and intelligent recipe data cleaning.
