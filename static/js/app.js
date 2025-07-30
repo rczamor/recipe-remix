@@ -283,8 +283,19 @@ class RecipeApp {
     }
 
     async cloneRecipe(recipeId) {
-        this.hideRecipeModal();
-        this.showCloneModal(recipeId);
+        try {
+            // Fetch the recipe data first
+            const response = await fetch(`/api/recipes/${recipeId}/`);
+            if (!response.ok) throw new Error('Failed to load recipe');
+            
+            const recipe = await response.json();
+            this.selectedRecipe = recipe; // Set it as selected recipe
+            this.hideRecipeModal();
+            this.showCloneModal(recipeId);
+        } catch (error) {
+            this.showToast('Failed to load recipe for cloning', 'error');
+            console.error('Error loading recipe:', error);
+        }
     }
 
     addAllIngredientsToShoppingList() {
