@@ -49,6 +49,11 @@ class RecipeApp {
         document.getElementById('closeSidebar').addEventListener('click', () => {
             this.hideShoppingList();
         });
+        
+        // Meal Calendar
+        document.getElementById('mealCalendarBtn').addEventListener('click', () => {
+            this.toggleMealCalendar();
+        });
 
         // Close modals on backdrop click
         document.getElementById('addRecipeModal').addEventListener('click', (e) => {
@@ -1445,6 +1450,28 @@ class RecipeApp {
     
     hideCleaningStats() {
         document.getElementById('cleaningStatsModal').classList.remove('show');
+    }
+    
+    toggleMealCalendar() {
+        const wrapper = document.getElementById('meal-calendar-wrapper');
+        const recipeGrid = document.getElementById('recipeGrid');
+        
+        if (wrapper.classList.contains('hidden')) {
+            // Show calendar, hide recipe grid
+            wrapper.classList.remove('hidden');
+            recipeGrid.classList.add('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+            
+            // Initialize calendar if not already done
+            if (!window.mealCalendar) {
+                window.mealCalendar = new MealCalendar();
+            }
+        } else {
+            // Hide calendar, show recipe grid
+            wrapper.classList.add('hidden');
+            recipeGrid.classList.remove('hidden');
+            this.renderRecipes(); // Re-render recipes when showing grid
+        }
     }
 }
 

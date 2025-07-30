@@ -72,6 +72,10 @@ Preferred communication style: Simple, everyday language.
   - 3-column grid layout: ingredients (1 column), instructions (2 columns)
   - Image gallery at the top
   - Ratings, date created, cook time, and servings displayed under title
+- **Meal Planning Calendar**: Toggle between recipe grid and calendar view using the calendar icon button in header
+  - Drag and drop recipes onto specific days and meal slots (breakfast, lunch, dinner, snack)
+  - Weekly view with navigation between weeks
+  - Generate shopping lists from weekly meal plans
 - **Add Recipe Modal**: URL-based recipe import with real-time scraping feedback
 - **Shopping List Sidebar**: Dynamic ingredient aggregation with pricing and management
 - **Rating System**: Interactive star-based rating with immediate feedback

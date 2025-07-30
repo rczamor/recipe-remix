@@ -75,7 +75,10 @@
                         <i class="fas fa-plus" style="margin-right: 8px !important;"></i>
                         Add Recipe
                     </button>
-                    <button id="shoppingListBtn" class="text-gray-600 hover:text-gray-900 p-2">
+                    <button id="mealCalendarBtn" class="text-gray-600 hover:text-gray-900 p-2" title="Meal Planning Calendar">
+                        <i class="fas fa-calendar-alt text-xl"></i>
+                    </button>
+                    <button id="shoppingListBtn" class="text-gray-600 hover:text-gray-900 p-2" title="Shopping List">
                         <i class="fas fa-shopping-cart text-xl"></i>
                     </button>
                 </div>
@@ -98,6 +101,11 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Meal Calendar Container (initially hidden) -->
+        <div id="meal-calendar-wrapper" class="hidden mb-8">
+            <!-- Calendar will be inserted here by JavaScript -->
+        </div>
+        
         <!-- Quick Actions -->
         <div class="mb-8">
             <div class="flex flex-wrap gap-4">

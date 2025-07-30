@@ -25,9 +25,12 @@ class MealCalendar {
     }
 
     createCalendarUI() {
+        const wrapper = document.getElementById('meal-calendar-wrapper');
+        if (!wrapper) return;
+        
         const container = document.createElement('div');
         container.id = 'meal-calendar-container';
-        container.className = 'bg-white rounded-lg shadow-md p-6 mt-6';
+        container.className = 'bg-white rounded-lg shadow-md p-6';
         container.innerHTML = `
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-gray-800">Meal Planning Calendar</h2>
@@ -65,11 +68,9 @@ class MealCalendar {
             </div>
         `;
         
-        // Insert after the recipes grid
-        const recipesGrid = document.getElementById('recipesGrid');
-        if (recipesGrid && recipesGrid.parentNode) {
-            recipesGrid.parentNode.insertBefore(container, recipesGrid.nextSibling);
-        }
+        // Insert into the wrapper
+        wrapper.innerHTML = '';
+        wrapper.appendChild(container);
     }
 
     bindEvents() {
