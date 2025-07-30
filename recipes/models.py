@@ -188,3 +188,68 @@ class ShoppingListItem(models.Model):
         
     def __str__(self):
         return f"{self.quantity} {self.name}"
+
+
+class RecipeCleaningFeedback(models.Model):
+    """Store user feedback on recipe cleaning quality"""
+    FEEDBACK_CHOICES = [
+        ('good', 'Good'),
+        ('needs_improvement', 'Needs Improvement'),
+    ]
+    
+    ISSUE_CHOICES = [
+        ('ingredients', 'Ingredients'),
+        ('instructions', 'Instructions'),
+        ('description', 'Description'),
+        ('timing', 'Timing'),
+        ('servings', 'Servings'),
+    ]
+    
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='cleaning_feedback')
+    original_data = models.JSONField()  # Original scraped data
+    cleaned_data = models.JSONField()  # AI cleaned data
+    user_corrections = models.JSONField(null=True, blank=True)  # User's manual corrections
+    feedback_type = models.CharField(max_length=20, choices=FEEDBACK_CHOICES)
+    specific_issues = models.JSONField(default=list)  # List of issue types
+    notes = models.TextField(blank=True)
+    session_id = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Feedback for {self.recipe.title} - {self.feedback_type}"
+
+
+class CleaningRule(models.Model):
+    """Learned rules for recipe cleaning"""
+    CATEGORY_CHOICES = [
+        ('ingredient', 'Ingredient'),
+        ('instruction', 'Instruction'),
+        ('description', 'Description'),
+        ('general', 'General'),
+    ]
+    
+    pattern = models.CharField(max_length=500)  # Regex pattern or keyword
+    replacement = models.CharField(max_length=500)  # Replacement rule
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    example_before = models.CharField(max_length=500)  # Example input
+    example_after = models.CharField(max_length=500)  # Example output
+    success_count = models.IntegerField(default=0)
+    failure_count = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_from_feedback = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-success_count', 'category', 'pattern']
+    
+    @property
+    def success_rate(self):
+        total = self.success_count + self.failure_count
+        return (self.success_count / total * 100) if total > 0 else 0
+    
+    def __str__(self):
+        return f"{self.category}: {self.pattern} → {self.replacement}"

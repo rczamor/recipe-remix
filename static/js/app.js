@@ -406,6 +406,9 @@ class RecipeApp {
     }
 
     showRecipePreviewModal(recipeData) {
+        // Store original data for feedback
+        this.previewRecipeData = recipeData;
+        
         const modalContent = `
             <div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-screen overflow-y-auto">
                 <div class="flex justify-between items-center mb-6">
@@ -414,6 +417,28 @@ class RecipeApp {
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
+                
+                ${recipeData._original_data ? `
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-robot text-blue-500 mt-1 mr-3"></i>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-blue-900 mb-2">AI Cleaning Applied</h3>
+                            <p class="text-blue-800 text-sm mb-3">This recipe has been automatically cleaned to fix spelling, standardize formats, and improve clarity.</p>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="app.submitCleaningFeedback('good')" 
+                                        class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm">
+                                    <i class="fas fa-thumbs-up mr-2"></i>Looks Good
+                                </button>
+                                <button type="button" onclick="app.submitCleaningFeedback('needs_improvement')" 
+                                        class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm">
+                                    <i class="fas fa-edit mr-2"></i>Needs Improvement
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
 
                 <form id="recipePreviewForm" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -660,6 +685,27 @@ class RecipeApp {
             }
 
             const savedRecipe = await response.json();
+            
+            // Submit pending feedback if available
+            if (this.pendingFeedback) {
+                try {
+                    const feedbackResponse = await fetch(`/api/recipes/${savedRecipe.id}/feedback/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(this.pendingFeedback)
+                    });
+                    
+                    if (feedbackResponse.ok) {
+                        console.log('Feedback submitted successfully');
+                    }
+                } catch (error) {
+                    console.error('Failed to submit feedback:', error);
+                }
+                this.pendingFeedback = null;
+            }
+            
             this.showToast('Recipe saved successfully!', 'success');
             this.hideRecipePreviewModal();
             this.loadRecipes();
@@ -1244,6 +1290,161 @@ class RecipeApp {
             this.showToast('Failed to load revision details', 'error');
             console.error('Error loading revision details:', error);
         }
+    }
+    
+    async submitCleaningFeedback(feedbackType) {
+        if (!this.previewRecipeData || !this.previewRecipeData._original_data) {
+            this.showToast('No cleaning data available for feedback', 'error');
+            return;
+        }
+        
+        try {
+            // Prepare the feedback data
+            const feedbackData = {
+                original_data: this.previewRecipeData._original_data,
+                cleaned_data: this.getCurrentPreviewData(),
+                feedback_type: feedbackType,
+                user_corrections: null
+            };
+            
+            // If needs improvement, we'll collect corrections from the form
+            if (feedbackType === 'needs_improvement') {
+                feedbackData.user_corrections = this.getCurrentPreviewData();
+                feedbackData.specific_issues = ['User edited after AI cleaning'];
+            }
+            
+            // We'll submit feedback after the recipe is saved
+            this.pendingFeedback = feedbackData;
+            
+            // Update UI to show feedback was recorded
+            const feedbackSection = document.querySelector('.bg-blue-50');
+            if (feedbackSection) {
+                feedbackSection.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-green-900 mb-2">Feedback Recorded</h3>
+                            <p class="text-green-800 text-sm">Thank you! Your feedback helps improve recipe cleaning.</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+        } catch (error) {
+            this.showToast('Failed to record feedback', 'error');
+            console.error('Error recording feedback:', error);
+        }
+    }
+    
+    getCurrentPreviewData() {
+        // Get current form data from the preview modal
+        return {
+            title: document.getElementById('previewTitle')?.value || '',
+            description: document.getElementById('previewDescription')?.value || '',
+            prep_time_minutes: parseInt(document.getElementById('previewPrepTime')?.value) || null,
+            cook_time_minutes: parseInt(document.getElementById('previewCookTime')?.value) || null,
+            servings: parseInt(document.getElementById('previewServings')?.value) || null,
+            ingredients: this.getIngredientsFromForm(),
+            instructions: this.getInstructionsFromForm()
+        };
+    }
+    
+    getIngredientsFromForm() {
+        const ingredients = [];
+        const rows = document.querySelectorAll('#previewIngredients .ingredient-row');
+        rows.forEach(row => {
+            const quantity = row.querySelector('input[placeholder="Quantity"]')?.value || '';
+            const name = row.querySelector('input[placeholder="Ingredient"]')?.value || '';
+            if (name) {
+                ingredients.push({ quantity, name });
+            }
+        });
+        return ingredients;
+    }
+    
+    getInstructionsFromForm() {
+        const instructions = [];
+        const rows = document.querySelectorAll('#previewInstructions .instruction-row');
+        rows.forEach(row => {
+            const description = row.querySelector('textarea')?.value || '';
+            if (description) {
+                instructions.push({ description });
+            }
+        });
+        return instructions;
+    }
+    
+    async showCleaningStats() {
+        document.getElementById('cleaningStatsModal').classList.add('show');
+        
+        try {
+            const response = await fetch('/api/cleaning/stats/');
+            if (!response.ok) throw new Error('Failed to load stats');
+            
+            const stats = await response.json();
+            
+            const statsContent = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-blue-900 mb-2">Feedback Summary</h4>
+                        <div class="space-y-2">
+                            <p class="text-sm"><span class="font-medium">Total Feedback:</span> ${stats.feedback_stats.total}</p>
+                            <p class="text-sm"><span class="font-medium">Good Quality:</span> ${stats.feedback_stats.good} (${stats.feedback_stats.satisfaction_rate.toFixed(1)}%)</p>
+                            <p class="text-sm"><span class="font-medium">Needs Improvement:</span> ${stats.feedback_stats.needs_improvement}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-green-900 mb-2">Cleaning Rules</h4>
+                        <div class="space-y-2">
+                            <p class="text-sm"><span class="font-medium">Active Rules:</span> ${stats.rules_stats.active}</p>
+                            <p class="text-sm"><span class="font-medium">Learned from Feedback:</span> ${stats.rules_stats.learned}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">Top Performing Rules</h4>
+                    ${stats.rules_stats.top_rules.length > 0 ? `
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="space-y-3">
+                                ${stats.rules_stats.top_rules.map(rule => `
+                                    <div class="border-b border-gray-200 pb-2 last:border-0">
+                                        <p class="text-sm font-medium">${rule.category}: "${rule.pattern}" → "${rule.replacement}"</p>
+                                        <p class="text-xs text-gray-600">Success rate: ${rule.success_rate}%</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : `
+                        <p class="text-gray-500 text-sm">No active rules yet. The system will learn from user feedback.</p>
+                    `}
+                </div>
+                
+                <div class="bg-orange-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-orange-900 mb-2">How It Works</h4>
+                    <p class="text-sm text-orange-800">
+                        The AI cleaning system learns from your feedback. When you mark cleaned recipes as "good" or "needs improvement", 
+                        the system discovers patterns and creates rules to improve future recipe cleaning. The more feedback provided, 
+                        the better the system becomes at standardizing ingredients, fixing spelling, and improving clarity.
+                    </p>
+                </div>
+            `;
+            
+            document.getElementById('cleaningStatsContent').innerHTML = statsContent;
+            
+        } catch (error) {
+            document.getElementById('cleaningStatsContent').innerHTML = `
+                <div class="text-center py-8">
+                    <p class="text-red-600">Failed to load statistics</p>
+                </div>
+            `;
+            console.error('Error loading cleaning stats:', error);
+        }
+    }
+    
+    hideCleaningStats() {
+        document.getElementById('cleaningStatsModal').classList.remove('show');
     }
 }
 

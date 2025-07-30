@@ -110,6 +110,9 @@
                 <button class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                     <i class="fas fa-calendar text-green-500 mr-2"></i>Recently Added
                 </button>
+                <button id="cleaningStatsBtn" onclick="app.showCleaningStats()" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-robot text-blue-500 mr-2"></i>AI Cleaning Stats
+                </button>
             </div>
         </div>
 
@@ -242,6 +245,24 @@
         <div class="bg-white rounded-lg p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
             <div id="revisionContent">
                 <!-- Revision history will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Cleaning Stats Modal -->
+    <div id="cleaningStatsModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold">AI Recipe Cleaning Statistics</h3>
+                <button onclick="app.hideCleaningStats()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="cleaningStatsContent">
+                <div class="text-center py-8">
+                    <div class="loading mx-auto"></div>
+                    <p class="text-gray-600 mt-3">Loading statistics...</p>
+                </div>
             </div>
         </div>
     </div>

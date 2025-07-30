@@ -6,6 +6,7 @@ from urllib.parse import urljoin, urlparse
 from typing import Dict, List, Optional, Any
 from .models import Recipe, RecipeRevision, Ingredient, Instruction
 from .recipe_cleaner import RecipeCleaner
+from .adaptive_cleaner import AdaptiveRecipeCleaner
 
 
 def create_recipe_revision(recipe: Recipe, change_summary: str = "") -> RecipeRevision:
@@ -68,7 +69,7 @@ class RecipeScrapingService:
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        self.cleaner = RecipeCleaner()
+        self.cleaner = AdaptiveRecipeCleaner()
     
     def scrape_recipe(self, url: str, enable_cleaning: bool = True) -> Dict[str, Any]:
         """
@@ -201,10 +202,12 @@ class RecipeScrapingService:
             'instructions': instructions
         }
         
-        # Clean the scraped data using the LLM cleaner if enabled
+        # Clean the scraped data using the adaptive cleaner if enabled
         if enable_cleaning:
             try:
-                cleaned_data = self.cleaner.clean_recipe(raw_data)
+                cleaned_data, original_data = self.cleaner.clean_recipe(raw_data, enable_adaptive=True)
+                # Store original data for potential feedback
+                cleaned_data['_original_data'] = original_data
                 return cleaned_data
             except Exception as e:
                 print(f"Warning: Recipe cleaning failed, returning raw data. Error: {str(e)}")

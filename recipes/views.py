@@ -7,10 +7,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Avg, Count
 from django.db import transaction
-from .models import Recipe, Ingredient, Instruction, Rating, RecipeRevision, ChatMessage, MealPlan, ShoppingList, ShoppingListItem
+from .models import Recipe, Ingredient, Instruction, Rating, RecipeRevision, ChatMessage, MealPlan, ShoppingList, ShoppingListItem, RecipeCleaningFeedback, CleaningRule
 from .services import RecipeScrapingService, create_recipe_revision
 from .ai_assistant import RecipeAssistant
 from .meal_planning_service import MealPlanningService
+from .adaptive_cleaner import AdaptiveRecipeCleaner, initialize_default_rules
 
 
 def home(request):
@@ -962,6 +963,92 @@ def update_shopping_item(request, item_id):
             'id': item.id,
             'is_purchased': item.is_purchased,
             'notes': item.notes
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# Recipe Cleaning Feedback Views
+@csrf_exempt
+@require_http_methods(["POST"])
+def submit_cleaning_feedback(request, recipe_id):
+    """Submit feedback on recipe cleaning quality"""
+    try:
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        data = json.loads(request.body)
+        
+        # Get or create session key
+        if not request.session.session_key:
+            request.session.create()
+        session_id = request.session.session_key
+        
+        # Create feedback record
+        feedback = RecipeCleaningFeedback.objects.create(
+            recipe=recipe,
+            original_data=data.get('original_data', {}),
+            cleaned_data=data.get('cleaned_data', {}),
+            user_corrections=data.get('user_corrections'),
+            feedback_type=data.get('feedback_type', 'good'),
+            specific_issues=data.get('specific_issues', []),
+            notes=data.get('notes', ''),
+            session_id=session_id
+        )
+        
+        # If it's negative feedback with corrections, learn from it
+        if feedback.feedback_type == 'needs_improvement' and feedback.user_corrections:
+            cleaner = AdaptiveRecipeCleaner()
+            new_rules = cleaner.learn_from_feedback()
+            
+        return JsonResponse({
+            'success': True,
+            'feedback_id': feedback.id,
+            'message': 'Thank you for your feedback!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+def get_cleaning_stats(request):
+    """Get statistics about recipe cleaning"""
+    try:
+        # Initialize default rules if needed
+        if CleaningRule.objects.count() == 0:
+            created_count = initialize_default_rules()
+        
+        # Get stats
+        total_feedback = RecipeCleaningFeedback.objects.count()
+        good_feedback = RecipeCleaningFeedback.objects.filter(feedback_type='good').count()
+        needs_improvement = RecipeCleaningFeedback.objects.filter(feedback_type='needs_improvement').count()
+        
+        active_rules = CleaningRule.objects.filter(is_active=True).count()
+        learned_rules = CleaningRule.objects.filter(created_from_feedback=True).count()
+        
+        # Get top performing rules
+        top_rules = CleaningRule.objects.filter(is_active=True).order_by('-success_count')[:5]
+        
+        return JsonResponse({
+            'feedback_stats': {
+                'total': total_feedback,
+                'good': good_feedback,
+                'needs_improvement': needs_improvement,
+                'satisfaction_rate': (good_feedback / total_feedback * 100) if total_feedback > 0 else 0
+            },
+            'rules_stats': {
+                'active': active_rules,
+                'learned': learned_rules,
+                'top_rules': [
+                    {
+                        'pattern': rule.pattern,
+                        'replacement': rule.replacement,
+                        'category': rule.category,
+                        'success_rate': rule.success_rate
+                    }
+                    for rule in top_rules
+                ]
+            }
         })
         
     except Exception as e:

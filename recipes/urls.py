@@ -31,6 +31,10 @@ urlpatterns = [
     path('api/shopping-lists/', views.get_shopping_lists, name='get_shopping_lists'),
     path('api/shopping-list/item/<int:item_id>/', views.update_shopping_item, name='update_shopping_item'),
     
+    # Recipe Cleaning Feedback API endpoints
+    path('api/recipes/<int:recipe_id>/feedback/', views.submit_cleaning_feedback, name='submit_cleaning_feedback'),
+    path('api/cleaning/stats/', views.get_cleaning_stats, name='get_cleaning_stats'),
+    
     # Main app page
     path('', views.home, name='home'),
     path('recipe/<int:recipe_id>/', views.recipe_detail, name='recipe_detail'),
