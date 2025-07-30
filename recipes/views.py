@@ -354,6 +354,7 @@ def clone_recipe(request, recipe_id):
 @require_http_methods(["PATCH"])
 def update_recipe(request, recipe_id):
     """Update a recipe"""
+    print(f"UPDATE_RECIPE called with method: {request.method} for recipe_id: {recipe_id}")
     try:
         recipe = get_object_or_404(Recipe, id=recipe_id)
         data = json.loads(request.body)
@@ -370,6 +371,8 @@ def update_recipe(request, recipe_id):
                 recipe.cook_time_minutes = data['cook_time_minutes']
             if 'servings' in data:
                 recipe.servings = data['servings']
+            if 'image_url' in data:
+                recipe.image_url = data['image_url']
             
             recipe.save()
             
