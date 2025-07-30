@@ -126,5 +126,10 @@ Preferred communication style: Simple, everyday language.
 - ✓ Transformed recipe display from modals to dedicated pages with URL pattern /recipe/{recipe_id}
 - ✓ Implemented 3-column grid layout for recipe details (ingredients 1 col, instructions 2 cols)
 - ✓ Added image gallery, ratings, date created, cook time, and servings display on recipe pages
+- ✓ AI chat assistant integrated with Langchain, Grok LLM, and SERPAPI for web searches
+- ✓ Meal planning calendar with drag-and-drop functionality for weekly meal organization
+- ✓ AI-powered shopping list generation from weekly meal plans using Grok
+- ✓ Repositioned Edit button next to View History button for better UX
+- ✓ Fixed image gallery to only display when recipes have associated images
 
-The application now runs as a pure Django web application with server-side rendering, vanilla JavaScript for client-side interactivity, comprehensive revision history tracking, and dedicated recipe detail pages.
+The application now runs as a pure Django web application with server-side rendering, vanilla JavaScript for client-side interactivity, comprehensive revision history tracking, dedicated recipe detail pages, AI-powered assistant, and meal planning features.
