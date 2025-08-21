@@ -156,3 +156,43 @@ CORS_ALLOW_CREDENTIALS = True
 # Session settings for anonymous rating
 SESSION_COOKIE_AGE = 86400 * 30  # 30 days
 SESSION_SAVE_EVERY_REQUEST = True
+
+# Django startup optimizations for faster deployment
+import sys
+
+# Skip migrations check during server startup in production
+if 'runserver' in sys.argv:
+    MIGRATION_MODULES = {
+        app: None for app in INSTALLED_APPS if not app.startswith('django.')
+    }
+
+# Reduce startup time by caching templates (only in production)
+if not DEBUG:
+    TEMPLATES[0]['APP_DIRS'] = False
+    TEMPLATES[0]['OPTIONS']['loaders'] = [
+        ('django.template.loaders.cached.Loader', [
+            'django.template.loaders.filesystem.Loader',
+            'django.template.loaders.app_directories.Loader',
+        ]),
+    ]
+
+# Optimize database connections for faster startup
+DATABASES['default']['CONN_MAX_AGE'] = 60
+DATABASES['default']['OPTIONS'] = {
+    'connect_timeout': 10,
+}
+
+# Disable unnecessary logging in production for faster startup
+if not DEBUG:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'null': {
+                'class': 'logging.NullHandler',
+            },
+        },
+        'root': {
+            'handlers': ['null'],
+        },
+    }

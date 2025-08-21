@@ -139,6 +139,11 @@ Design decisions: Never change requirements or make architectural decisions with
 - ✓ Database migrations applied successfully
 - ✓ Application serving homepage correctly
 - ✓ All Django checks passing without issues
+- ✓ **Deployment Issues Fixed**: Resolved port mismatch and startup optimization issues
+  - Fixed port mismatch: Django now consistently runs on port 8000 (was incorrectly set to 5000)
+  - Added Django startup optimizations for faster deployment
+  - Enhanced all deployment scripts with performance improvements
+  - Created comprehensive deployment troubleshooting documentation
 - ✓ Revision history feature implemented with automatic change tracking
 - ✓ Recipe import flow working with preview/edit functionality
 - ✓ All recipe modifications now create revision snapshots

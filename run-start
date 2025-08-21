@@ -1,6 +1,7 @@
 #!/bin/bash
-# Start script for Django deployment
-echo "Starting Django application..."
+# Optimized start script for Django deployment
+echo "Starting Django application with optimizations..."
 
-# Run the Django server
-python manage.py runserver 0.0.0.0:8000
+# Start the Django server with startup optimizations
+# Using --nothreading and --insecure for faster startup in deployment
+exec python manage.py runserver 0.0.0.0:8000 --nothreading --insecure

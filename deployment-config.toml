@@ -1,0 +1,17 @@
+# Alternative deployment configuration file
+# This file provides the correct port configuration for deployment
+# Since .replit cannot be modified directly, this serves as reference
+
+[deployment]
+deploymentTarget = "autoscale"
+build = ["python", "manage.py", "collectstatic", "--noinput"]
+run = ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+[ports]
+localPort = 8000
+externalPort = 80
+
+# Environment variables for deployment
+[env]
+DJANGO_SETTINGS_MODULE = "recipe_manager.settings"
+PYTHONPATH = "."

@@ -1,13 +1,13 @@
 #!/bin/bash
-# Build script for Django deployment
-echo "Running Django build process..."
+# Optimized build script for Django deployment
+echo "Running Django build process with optimizations..."
+
+# Run database migrations with fast sync
+echo "Running database migrations..."
+python manage.py migrate --run-syncdb
 
 # Collect static files
 echo "Collecting static files..."
-python manage.py collectstatic --noinput
-
-# Run database migrations
-echo "Running database migrations..."
-python manage.py migrate
+python manage.py collectstatic --noinput --clear
 
 echo "Build completed successfully!"

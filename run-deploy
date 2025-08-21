@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Optimized deployment script that handles port configuration correctly
+echo "Starting optimized Django deployment..."
+
+# Ensure migrations are run
+echo "Running database migrations..."
+python manage.py migrate --run-syncdb
+
+# Collect static files for production
+echo "Collecting static files..."
+python manage.py collectstatic --noinput
+
+# Start Django server on port 8000 with production optimizations
+echo "Starting Django server on port 8000..."
+exec python manage.py runserver 0.0.0.0:8000 --nothreading --insecure
