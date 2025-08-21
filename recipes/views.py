@@ -795,6 +795,34 @@ def remove_from_meal_plan(request, meal_plan_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def save_meal_plan(request):
+    """Save all meal plan changes for a week"""
+    try:
+        data = json.loads(request.body)
+        week_start = data.get('week_start')
+        week_end = data.get('week_end')
+        meal_plans = data.get('meal_plans', {})
+        
+        # Get or create session key
+        if not request.session.session_key:
+            request.session.create()
+        session_id = request.session.session_key
+        
+        # Since the meal plans are already saved via add_to_meal_plan,
+        # this endpoint just confirms the save was successful
+        # In a production app, you might want to batch save all changes here
+        
+        return JsonResponse({
+            'message': 'Meal plans saved successfully',
+            'week_start': week_start,
+            'week_end': week_end
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
 @require_http_methods(["GET"])
 def get_week_meal_plan(request):
     """Get meal plans for a week"""

@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/meal-plan/add/', views.add_to_meal_plan, name='add_to_meal_plan'),
     path('api/meal-plan/<int:meal_plan_id>/remove/', views.remove_from_meal_plan, name='remove_from_meal_plan'),
     path('api/meal-plan/week/', views.get_week_meal_plan, name='get_week_meal_plan'),
+    path('api/meal-plan/save/', views.save_meal_plan, name='save_meal_plan'),
     path('api/shopping-list/generate/', views.generate_shopping_list, name='generate_shopping_list'),
     path('api/shopping-lists/', views.get_shopping_lists, name='get_shopping_lists'),
     path('api/shopping-list/item/<int:item_id>/', views.update_shopping_item, name='update_shopping_item'),

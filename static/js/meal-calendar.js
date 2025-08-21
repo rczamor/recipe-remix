@@ -30,9 +30,9 @@ class MealCalendar {
         
         const container = document.createElement('div');
         container.id = 'meal-calendar-container';
-        container.className = 'bg-white rounded-lg shadow-md p-6';
+        container.className = 'bg-white rounded-lg shadow-md p-6 max-h-[calc(100vh-100px)] overflow-y-auto';
         container.innerHTML = `
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2">
                 <h2 class="text-2xl font-bold text-gray-800">Meal Planning Calendar</h2>
                 <div class="flex items-center space-x-2">
                     <button id="prev-week" class="p-2 hover:bg-gray-100 rounded">
@@ -42,7 +42,10 @@ class MealCalendar {
                     <button id="next-week" class="p-2 hover:bg-gray-100 rounded">
                         <i class="fas fa-chevron-right"></i>
                     </button>
-                    <button id="generate-shopping-list" class="ml-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    <button id="save-calendar" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>Save Changes
+                    </button>
+                    <button id="generate-shopping-list" class="ml-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
                         <i class="fas fa-shopping-cart mr-2"></i>Generate Shopping List
                     </button>
                 </div>
@@ -50,6 +53,25 @@ class MealCalendar {
             
             <div id="calendar-grid" class="grid grid-cols-7 gap-2">
                 <!-- Calendar will be populated here -->
+            </div>
+            
+            <!-- Recipe Selection Modal -->
+            <div id="recipe-selection-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                <div class="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Select Recipe</h3>
+                        <button id="close-recipe-modal" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="mb-4">
+                        <input type="text" id="recipe-search-input" placeholder="Search recipes..." 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div id="recipe-selection-list" class="flex-1 overflow-y-auto">
+                        <!-- Recipe list will be populated here -->
+                    </div>
+                </div>
             </div>
             
             <!-- Shopping List Modal -->
@@ -76,30 +98,89 @@ class MealCalendar {
     bindEvents() {
         document.getElementById('prev-week').addEventListener('click', () => this.changeWeek(-1));
         document.getElementById('next-week').addEventListener('click', () => this.changeWeek(1));
+        document.getElementById('save-calendar').addEventListener('click', () => this.saveCalendarChanges());
         document.getElementById('generate-shopping-list').addEventListener('click', () => this.generateShoppingList());
         document.getElementById('close-shopping-modal').addEventListener('click', () => this.closeShoppingModal());
+        document.getElementById('close-recipe-modal').addEventListener('click', () => this.closeRecipeSelectionModal());
         
-        // Enable drag and drop
-        this.setupDragAndDrop();
+        // Recipe search with debounce
+        let searchTimeout;
+        document.getElementById('recipe-search-input').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => this.searchRecipes(e.target.value), 300);
+        });
     }
 
-    setupDragAndDrop() {
-        // Make recipe cards draggable
-        document.addEventListener('dragstart', (e) => {
-            if (e.target.closest('.recipe-card')) {
-                const recipeCard = e.target.closest('.recipe-card');
-                const recipeId = recipeCard.dataset.recipeId;
-                e.dataTransfer.setData('recipeId', recipeId);
-                e.dataTransfer.effectAllowed = 'copy';
-                recipeCard.classList.add('opacity-50');
+    openRecipeSelectionModal(date, mealType) {
+        this.selectedDate = date;
+        this.selectedMealType = mealType;
+        
+        const modal = document.getElementById('recipe-selection-modal');
+        modal.classList.remove('hidden');
+        
+        // Load recipes
+        this.loadRecipesForSelection();
+    }
+    
+    closeRecipeSelectionModal() {
+        document.getElementById('recipe-selection-modal').classList.add('hidden');
+        document.getElementById('recipe-search-input').value = '';
+    }
+    
+    async loadRecipesForSelection(searchQuery = '') {
+        const listContainer = document.getElementById('recipe-selection-list');
+        listContainer.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Loading recipes...</div>';
+        
+        try {
+            const url = searchQuery ? `/api/recipes/?q=${encodeURIComponent(searchQuery)}` : '/api/recipes/';
+            const response = await fetch(url);
+            
+            if (response.ok) {
+                const recipes = await response.json();
+                this.displayRecipesForSelection(recipes);
             }
-        });
-
-        document.addEventListener('dragend', (e) => {
-            if (e.target.closest('.recipe-card')) {
-                e.target.closest('.recipe-card').classList.remove('opacity-50');
-            }
-        });
+        } catch (error) {
+            console.error('Error loading recipes:', error);
+            listContainer.innerHTML = '<div class="text-center text-red-500 py-4">Failed to load recipes</div>';
+        }
+    }
+    
+    displayRecipesForSelection(recipes) {
+        const listContainer = document.getElementById('recipe-selection-list');
+        
+        if (recipes.length === 0) {
+            listContainer.innerHTML = '<div class="text-center text-gray-500 py-4">No recipes found</div>';
+            return;
+        }
+        
+        listContainer.innerHTML = recipes.map(recipe => `
+            <div class="recipe-selection-item border rounded-lg p-3 mb-2 hover:bg-gray-50 cursor-pointer transition-colors"
+                 onclick="mealCalendar.selectRecipeForMeal(${recipe.id})">
+                <div class="flex items-start">
+                    ${recipe.image_url ? `
+                        <img src="${recipe.image_url}" alt="${recipe.title}" class="w-16 h-16 rounded object-cover mr-3">
+                    ` : ''}
+                    <div class="flex-1">
+                        <h4 class="font-semibold">${recipe.title}</h4>
+                        ${recipe.description ? `<p class="text-sm text-gray-600 mt-1">${recipe.description.substring(0, 100)}...</p>` : ''}
+                        <div class="flex items-center text-xs text-gray-500 mt-2">
+                            ${recipe.prep_time ? `<span><i class="fas fa-clock"></i> ${recipe.prep_time}min</span>` : ''}
+                            ${recipe.cook_time ? `<span class="ml-3"><i class="fas fa-fire"></i> ${recipe.cook_time}min</span>` : ''}
+                            ${recipe.servings ? `<span class="ml-3"><i class="fas fa-users"></i> ${recipe.servings}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    async selectRecipeForMeal(recipeId) {
+        await this.addToMealPlan(recipeId, this.selectedDate, this.selectedMealType);
+        this.closeRecipeSelectionModal();
+    }
+    
+    async searchRecipes(query) {
+        await this.loadRecipesForSelection(query);
     }
 
     changeWeek(direction) {
@@ -150,7 +231,7 @@ class MealCalendar {
                     ${this.mealTypes.map(mealType => `
                         <div class="meal-slot" data-date="${dateStr}" data-meal-type="${mealType}">
                             <div class="text-xs font-medium text-gray-600 capitalize mb-1">${mealType}</div>
-                            <div class="meal-drop-zone bg-white border-2 border-dashed border-gray-300 rounded p-2 min-h-[40px] hover:border-blue-400 transition-colors">
+                            <div class="meal-content bg-white border border-gray-200 rounded p-2 min-h-[40px]">
                                 ${this.renderMealPlan(dateStr, mealType)}
                             </div>
                         </div>
@@ -160,9 +241,6 @@ class MealCalendar {
             
             grid.appendChild(dayCard);
         }
-        
-        // Setup drop zones
-        this.setupDropZones();
     }
 
     renderMealPlan(date, mealType) {
@@ -190,37 +268,50 @@ class MealCalendar {
             `;
         }
         
-        return '<div class="text-gray-400 text-center">Drop recipe here</div>';
+        return `
+            <button onclick="mealCalendar.openRecipeSelectionModal('${date}', '${mealType}')" 
+                class="w-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded p-1 transition-colors text-xs">
+                <i class="fas fa-plus-circle"></i> Add Recipe
+            </button>
+        `;
     }
 
-    setupDropZones() {
-        const dropZones = document.querySelectorAll('.meal-drop-zone');
+    async saveCalendarChanges() {
+        const saveBtn = document.getElementById('save-calendar');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
         
-        dropZones.forEach(zone => {
-            zone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'copy';
-                zone.classList.add('bg-blue-50', 'border-blue-400');
+        try {
+            // Get all current meal plans for the week
+            const weekStart = this.formatDate(this.currentWeek);
+            const weekEnd = new Date(this.currentWeek);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            
+            const response = await fetch('/api/meal-plan/save/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    week_start: weekStart,
+                    week_end: this.formatDate(weekEnd),
+                    meal_plans: this.mealPlans
+                })
             });
             
-            zone.addEventListener('dragleave', () => {
-                zone.classList.remove('bg-blue-50', 'border-blue-400');
-            });
-            
-            zone.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                zone.classList.remove('bg-blue-50', 'border-blue-400');
-                
-                const recipeId = e.dataTransfer.getData('recipeId');
-                const mealSlot = zone.closest('.meal-slot');
-                const date = mealSlot.dataset.date;
-                const mealType = mealSlot.dataset.mealType;
-                
-                if (recipeId) {
-                    await this.addToMealPlan(recipeId, date, mealType);
-                }
-            });
-        });
+            if (response.ok) {
+                this.showToast('Calendar changes saved successfully', 'success');
+            } else {
+                this.showToast('Failed to save calendar changes', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving calendar:', error);
+            this.showToast('Failed to save calendar changes', 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }
     }
 
     async addToMealPlan(recipeId, date, mealType) {
