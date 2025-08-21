@@ -997,6 +997,49 @@ def update_shopping_item(request, item_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+def shopping_lists(request):
+    """Display all shopping lists for the user"""
+    # Get or create session key
+    if not request.session.session_key:
+        request.session.create()
+    session_id = request.session.session_key
+    
+    # Get shopping lists
+    shopping_lists = ShoppingList.objects.filter(
+        session_id=session_id
+    ).order_by('-created_at')
+    
+    context = {
+        'shopping_lists': shopping_lists,
+    }
+    return render(request, 'recipes/shopping_lists.html', context)
+
+
+def shopping_list_detail(request, list_id):
+    """Display a single shopping list with aggregated ingredients"""
+    # Get or create session key
+    if not request.session.session_key:
+        request.session.create()
+    session_id = request.session.session_key
+    
+    # Get the shopping list
+    shopping_list = get_object_or_404(ShoppingList, id=list_id, session_id=session_id)
+    
+    # Get all items with their recipe sources
+    items_with_recipes = []
+    for item in shopping_list.items.all():
+        items_with_recipes.append({
+            'item': item,
+            'recipes': item.recipe_sources.all()
+        })
+    
+    context = {
+        'shopping_list': shopping_list,
+        'items_with_recipes': items_with_recipes,
+    }
+    return render(request, 'recipes/shopping_list_detail.html', context)
+
+
 # Recipe Cleaning Feedback Views
 @csrf_exempt
 @require_http_methods(["POST"])

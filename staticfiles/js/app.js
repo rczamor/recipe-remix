@@ -42,9 +42,9 @@ class RecipeApp {
             this.importRecipe();
         });
 
-        // Shopping list
+        // Shopping list - Navigate to shopping lists page
         document.getElementById('shoppingListBtn').addEventListener('click', () => {
-            this.toggleShoppingList();
+            window.location.href = '/shopping-lists/';
         });
         document.getElementById('closeSidebar').addEventListener('click', () => {
             this.hideShoppingList();

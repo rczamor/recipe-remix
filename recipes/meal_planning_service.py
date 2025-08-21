@@ -32,16 +32,25 @@ class MealPlanningService:
         if not meal_plans:
             raise ValueError("No meal plans found for the specified week")
         
-        # Prepare recipes data for AI
+        # Build a map of recipes to their ingredients
+        recipe_ingredients_map = {}
         recipes_data = []
+        
         for meal_plan in meal_plans:
             recipe = meal_plan.recipe
-            ingredients = [
-                f"{ing.quantity} {ing.name}" 
-                for ing in recipe.ingredients.all()
-            ]
+            ingredients = []
+            
+            for ing in recipe.ingredients.all():
+                ingredient_str = f"{ing.quantity} {ing.name}"
+                ingredients.append(ingredient_str)
+                
+                # Track which recipes need each ingredient
+                if ing.name not in recipe_ingredients_map:
+                    recipe_ingredients_map[ing.name] = []
+                recipe_ingredients_map[ing.name].append(recipe)
             
             recipes_data.append({
+                'recipe_id': recipe.id,
                 'date': meal_plan.date.isoformat(),
                 'meal_type': meal_plan.meal_type,
                 'recipe_name': recipe.title,
@@ -65,7 +74,8 @@ Please return a JSON object with the following structure:
             "name": "ingredient name",
             "quantity": "total quantity needed",
             "category": "Produce|Dairy|Meat|Pantry|Frozen|Other",
-            "notes": "optional notes about the ingredient"
+            "notes": "optional notes about the ingredient",
+            "original_names": ["list of original ingredient names that were combined"]
         }}
     ]
 }}
@@ -73,6 +83,7 @@ Please return a JSON object with the following structure:
 Important:
 - Combine duplicate ingredients and sum their quantities
 - Convert units when appropriate (e.g., 2 cups + 1 cup = 3 cups)
+- Include the original ingredient names that were combined in "original_names"
 - Organize by category for easy shopping
 - Be specific with quantities
 - Return ONLY valid JSON, no additional text"""
@@ -91,9 +102,9 @@ Important:
                     end_date=end_date
                 )
                 
-                # Create shopping list items
+                # Create shopping list items with recipe tracking
                 for idx, item_data in enumerate(result['shopping_list']):
-                    ShoppingListItem.objects.create(
+                    item = ShoppingListItem.objects.create(
                         shopping_list=shopping_list,
                         name=item_data['name'],
                         quantity=item_data['quantity'],
@@ -101,6 +112,28 @@ Important:
                         notes=item_data.get('notes', ''),
                         order=idx
                     )
+                    
+                    # Link recipes to this shopping list item
+                    linked_recipes = set()
+                    original_names = item_data.get('original_names', [item_data['name']])
+                    
+                    for original_name in original_names:
+                        # Find recipes that use this ingredient
+                        for key in recipe_ingredients_map.keys():
+                            if original_name.lower() in key.lower() or key.lower() in original_name.lower():
+                                linked_recipes.update(recipe_ingredients_map[key])
+                    
+                    # If we couldn't find specific matches, link all recipes that have similar ingredients
+                    if not linked_recipes:
+                        for meal_plan in meal_plans:
+                            for ing in meal_plan.recipe.ingredients.all():
+                                if item_data['name'].lower() in ing.name.lower() or ing.name.lower() in item_data['name'].lower():
+                                    linked_recipes.add(meal_plan.recipe)
+                                    break
+                    
+                    # Add the recipe relationships
+                    if linked_recipes:
+                        item.recipe_sources.set(linked_recipes)
                 
                 return shopping_list
                 

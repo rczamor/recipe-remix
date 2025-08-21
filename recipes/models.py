@@ -182,6 +182,8 @@ class ShoppingListItem(models.Model):
     price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     notes = models.TextField(blank=True)
     order = models.PositiveIntegerField(default=0)
+    # Track which recipes this item is needed for
+    recipe_sources = models.ManyToManyField(Recipe, blank=True, related_name='shopping_items')
     
     class Meta:
         ordering = ['category', 'order', 'name']

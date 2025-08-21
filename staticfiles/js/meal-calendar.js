@@ -378,7 +378,11 @@ class MealCalendar {
             
             if (response.ok) {
                 const shoppingList = await response.json();
-                this.displayShoppingList(shoppingList);
+                this.showToast('Shopping list generated successfully! Redirecting...', 'success');
+                // Navigate to the new shopping list detail page
+                setTimeout(() => {
+                    window.location.href = `/shopping-lists/${shoppingList.id}/`;
+                }, 1000);
             } else {
                 const error = await response.json();
                 this.showToast(error.error || 'Failed to generate shopping list', 'error');
