@@ -16,6 +16,22 @@
             text-decoration: line-through;
             opacity: 0.6;
         }
+        
+        /* Override Django admin button styles */
+        button[type="submit"],
+        input[type="submit"] {
+            background: #f97316 !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: 500 !important;
+            padding: 12px 24px !important;
+        }
+        
+        button[type="submit"]:hover,
+        input[type="submit"]:hover {
+            background: #ea580c !important;
+        }
     </style>
 </head>
 <body class="bg-gray-50">

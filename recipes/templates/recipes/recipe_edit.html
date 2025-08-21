@@ -7,6 +7,23 @@
     <title>Edit {{ recipe.title }} - Family Recipe Manager</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Override Django admin button styles */
+        button[type="submit"],
+        input[type="submit"] {
+            background: #f97316 !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: 500 !important;
+            padding: 12px 24px !important;
+        }
+        
+        button[type="submit"]:hover,
+        input[type="submit"]:hover {
+            background: #ea580c !important;
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
