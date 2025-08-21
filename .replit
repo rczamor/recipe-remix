@@ -3,6 +3,7 @@ modules = ["python-base-3.11", "python-3.11"]
 channel = "stable-23_11"
 
 modules = ["python-3.11"]
+packages = ["bash", "freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "tcl", "tk", "zlib"]
 
 [env]
 REPLIT_KEEP_PACKAGE_DEV_DEPENDENCIES = "1"
