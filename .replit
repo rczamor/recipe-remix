@@ -1,4 +1,6 @@
 modules = ["python-base-3.11", "python-3.11"]
+run = ["bash", "./start_server.sh"]
+
 [nix]
 channel = "stable-23_11"
 packages = ["bash", "freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "tcl", "tk", "zlib"]
@@ -6,18 +8,16 @@ packages = ["bash", "freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", 
 [env]
 REPLIT_KEEP_PACKAGE_DEV_DEPENDENCIES = "1"
 
-
 [deployment]
 deploymentTarget = "autoscale"
 build = ["python3", "manage.py", "collectstatic", "--noinput"]
-run = ["bash", "./start_server.sh"]
+run = ["python3", "manage.py", "runserver", "0.0.0.0:5000"]
 
 [[ports]]
 localPort = 8000
 externalPort = 80
 
 [workflows]
-
 [[workflows.workflow]]
 name = "Start app"
 mode = "sequential"
