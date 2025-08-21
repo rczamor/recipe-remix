@@ -1224,11 +1224,17 @@ def user_login(request):
         if user is not None:
             login(request, user)
             messages.success(request, f"Welcome back, {user.username}!")
-            return redirect("home")
+            # Get the 'next' parameter if it exists
+            next_url = request.POST.get('next') or request.GET.get('next') or 'home'
+            return redirect(next_url)
         else:
             messages.error(request, "Invalid username or password.")
     
-    return render(request, "recipes/login.html")
+    # Pass the 'next' parameter to the template
+    context = {
+        'next': request.GET.get('next', '')
+    }
+    return render(request, "recipes/login.html", context)
 
 
 def user_signup(request):

@@ -1,0 +1,45 @@
+Page not found (404)
+Request Method:	GET
+Request URL:	http://7ed4b1f2-a184-4e34-82bb-2f6cba40180a-00-201uhtb65azk8.janeway.replit.dev/login/%3Fnext%3D/
+Using the URLconf defined in recipe_manager.urls, Django tried these URL patterns, in this order:
+
+admin/
+api/recipes/ [name='get_recipes']
+api/recipes/create/ [name='create_recipe']
+api/recipes/scrape/ [name='scrape_recipe']
+api/recipes/search/ [name='search_recipes']
+api/recipes/<int:recipe_id>/update/ [name='update_recipe']
+api/recipes/<int:recipe_id>/delete/ [name='delete_recipe']
+api/recipes/<int:recipe_id>/clone/ [name='clone_recipe']
+api/recipes/<int:recipe_id>/rate/ [name='rate_recipe']
+api/recipes/<int:recipe_id>/revisions/ [name='get_recipe_revisions']
+api/recipes/<int:recipe_id>/revisions/<int:revision_number>/ [name='get_revision_details']
+api/recipes/<int:recipe_id>/ [name='get_recipe']
+api/shopping-list/ [name='get_shopping_list']
+api/chat/message/ [name='chat_message']
+api/chat/history/ [name='chat_history']
+api/chat/clear/ [name='clear_chat']
+api/meal-plan/add/ [name='add_to_meal_plan']
+api/meal-plan/<int:meal_plan_id>/remove/ [name='remove_from_meal_plan']
+api/meal-plan/week/ [name='get_week_meal_plan']
+api/meal-plan/save/ [name='save_meal_plan']
+api/shopping-list/generate/ [name='generate_shopping_list']
+api/shopping-lists/ [name='get_shopping_lists']
+api/shopping-list/item/<int:item_id>/ [name='update_shopping_item']
+api/recipes/<int:recipe_id>/feedback/ [name='submit_cleaning_feedback']
+api/cleaning/stats/ [name='get_cleaning_stats']
+login/ [name='login']
+signup/ [name='signup']
+logout/ [name='logout']
+family-settings/ [name='family_settings']
+join-family/ [name='join_family']
+join-family/<str:invite_code>/ [name='join_family_with_code']
+[name='home']
+recipe/<int:recipe_id>/ [name='recipe_detail']
+recipe/<int:recipe_id>/edit/ [name='recipe_edit']
+meal-calendar/ [name='meal_calendar']
+shopping-lists/ [name='shopping_lists']
+shopping-lists/<int:list_id>/ [name='shopping_list_detail']
+The current path, login/?next=/, didn’t match any of these.
+
+You’re seeing this error because you have DEBUG = True in your Django settings file. Change that to False, and Django will display a standard 404 page.
