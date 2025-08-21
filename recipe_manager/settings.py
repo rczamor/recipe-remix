@@ -29,6 +29,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# CSRF Settings for Replit
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.replit.dev',
+    'https://*.replit.app',
+    'https://*.repl.co',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
 # Login URLs
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
