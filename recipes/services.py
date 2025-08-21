@@ -90,7 +90,7 @@ class RecipeScrapingService:
                 return recipe_data
             
             # Fallback to HTML parsing
-            recipe_data = self._extract_from_html(soup, url)
+            recipe_data = self._extract_from_html(soup, url, enable_cleaning)
             recipe_data['source_url'] = url
             return recipe_data
             
@@ -166,7 +166,7 @@ class RecipeScrapingService:
             'instructions': instructions
         }
     
-    def _extract_from_html(self, soup: BeautifulSoup, url: str) -> Dict[str, Any]:
+    def _extract_from_html(self, soup: BeautifulSoup, url: str, enable_cleaning: bool = True) -> Dict[str, Any]:
         """Extract recipe data from HTML using common selectors"""
         
         # Extract title
