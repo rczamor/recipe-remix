@@ -1,5 +1,5 @@
 modules = ["nodejs-20", "web", "postgresql-16", "python-3.11"]
-run = "npm run dev"
+run = "./run-start"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
@@ -8,8 +8,8 @@ packages = ["bash", "freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", 
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["npm", "run", "build"]
-run = ["npm", "run", "start"]
+build = ['python manage.py collectstatic --noinput && python manage.py migrate"]
+run = ["python manage.py runserver 0.0.0.0:5000t"]
 
 [env]
 PORT = "5000"
