@@ -7,6 +7,7 @@ Recipe Remix is a full-stack family recipe management web application built with
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Design decisions: Never change requirements or make architectural decisions without explicit user permission. Always ask before changing core functionality.
 
 ## System Architecture
 
@@ -125,11 +126,12 @@ Preferred communication style: Simple, everyday language.
 - **SECRET_KEY**: Django security key for sessions and CSRF
 
 ### Authentication & Family Features
-- **User Authentication**: Django-based login system with registration and session management
+- **User Authentication**: Django-based login system with registration and session management (not Replit Auth)
 - **Family Groups**: Users belong to family groups that share recipes, meal plans, and shopping lists
 - **Invitation System**: Family owners can invite members via email with unique invitation codes
 - **Access Control**: All views require authentication and filter content by family group
 - **User Interface**: Fun animated "Recipe Remix" logo with gradient effects
+- **Design Decision**: Uses Django's built-in authentication instead of Replit Auth for better integration with family management features
 
 ### Current Status (August 21, 2025)
 - ✓ Pure Django application (all Node.js remnants removed)
