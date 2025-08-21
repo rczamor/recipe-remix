@@ -7,10 +7,10 @@ const scripts = {
     console.log('Running Django build steps...');
     try {
       console.log('Collecting static files...');
-      execSync('python manage.py collectstatic --noinput', { stdio: 'inherit' });
+      execSync('python3 manage.py collectstatic --noinput', { stdio: 'inherit' });
       
       console.log('Running database migrations...');
-      execSync('python manage.py migrate', { stdio: 'inherit' });
+      execSync('python3 manage.py migrate', { stdio: 'inherit' });
       
       console.log('Build completed successfully!');
     } catch (error) {
@@ -22,7 +22,7 @@ const scripts = {
   start: () => {
     console.log('Starting Django application...');
     try {
-      execSync('python manage.py runserver 0.0.0.0:5000', { stdio: 'inherit' });
+      execSync('python3 manage.py runserver 0.0.0.0:5000', { stdio: 'inherit' });
     } catch (error) {
       console.error('Failed to start server:', error.message);
       process.exit(1);
@@ -32,7 +32,7 @@ const scripts = {
   dev: () => {
     console.log('Starting Django development server...');
     try {
-      execSync('python manage.py runserver 0.0.0.0:5000', { stdio: 'inherit' });
+      execSync('python3 manage.py runserver 0.0.0.0:5000', { stdio: 'inherit' });
     } catch (error) {
       console.error('Failed to start development server:', error.message);
       process.exit(1);
