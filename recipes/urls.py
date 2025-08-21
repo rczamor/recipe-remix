@@ -48,6 +48,7 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('recipe/<int:recipe_id>/', views.recipe_detail, name='recipe_detail'),
     path('recipe/<int:recipe_id>/edit/', views.recipe_edit, name='recipe_edit'),
+    path('meal-calendar/', views.meal_calendar, name='meal_calendar'),
     path('shopping-lists/', views.shopping_lists, name='shopping_lists'),
     path('shopping-lists/<int:list_id>/', views.shopping_list_detail, name='shopping_list_detail'),
 ]

@@ -25,54 +25,14 @@ class MealCalendar {
     }
 
     createCalendarUI() {
-        const wrapper = document.getElementById('meal-calendar-wrapper');
-        if (!wrapper) return;
+        // Update week display
+        this.updateWeekDisplay();
         
-        const container = document.createElement('div');
-        container.id = 'meal-calendar-container';
-        container.className = 'bg-white rounded-lg shadow-md p-6 max-h-[calc(100vh-100px)] overflow-y-auto';
-        container.innerHTML = `
-            <div class="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2">
-                <h2 class="text-2xl font-bold text-gray-800">Meal Planning Calendar</h2>
-                <div class="flex items-center space-x-2">
-                    <button id="prev-week" class="p-2 hover:bg-gray-100 rounded">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <span id="week-display" class="font-semibold mx-4"></span>
-                    <button id="next-week" class="p-2 hover:bg-gray-100 rounded">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                    <button id="save-calendar" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-save mr-2"></i>Save Changes
-                    </button>
-                    <button id="generate-shopping-list" class="ml-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                        <i class="fas fa-shopping-cart mr-2"></i>Generate Shopping List
-                    </button>
-                </div>
-            </div>
-            
-            <div id="calendar-grid" class="grid grid-cols-7 gap-2">
-                <!-- Calendar will be populated here -->
-            </div>
-            
-            <!-- Recipe Selection Modal -->
-            <div id="recipe-selection-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-                <div class="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-bold">Select Recipe</h3>
-                        <button id="close-recipe-modal" class="text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
-                    </div>
-                    <div class="mb-4">
-                        <input type="text" id="recipe-search-input" placeholder="Search recipes..." 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div id="recipe-selection-list" class="flex-1 overflow-y-auto">
-                        <!-- Recipe list will be populated here -->
-                    </div>
-                </div>
-            </div>
+        // Render calendar grid
+        this.renderCalendarGrid();
+        
+        // Load recipes for drag and drop
+        this.loadRecipesForDragDrop();
             
             <!-- Shopping List Modal -->
             <div id="shopping-list-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">

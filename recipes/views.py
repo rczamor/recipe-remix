@@ -42,9 +42,26 @@ def home(request):
     return render(request, 'recipes/index.html', context)
 
 
+@login_required
+def meal_calendar(request):
+    """Serve the meal calendar page"""
+    family_group = request.user.family_groups.first() or request.user.owned_families.first()
+    
+    context = {
+        'family_group': family_group,
+        'user': request.user
+    }
+    return render(request, 'recipes/meal_calendar.html', context)
+
+
+@login_required
 def recipe_detail(request, recipe_id):
     """Display a single recipe on its own page"""
-    recipe = get_object_or_404(Recipe, id=recipe_id)
+    # Get user's family group
+    family_group = request.user.family_groups.first() or request.user.owned_families.first()
+    
+    # Get recipe and ensure it belongs to user's family
+    recipe = get_object_or_404(Recipe, id=recipe_id, family_group=family_group)
     
     # Get user's rating if exists
     user_rating = None
@@ -62,26 +79,40 @@ def recipe_detail(request, recipe_id):
     return render(request, 'recipes/recipe_detail.html', context)
 
 
+@login_required
 def recipe_edit(request, recipe_id):
     """Display the edit form for a recipe"""
-    recipe = get_object_or_404(Recipe, id=recipe_id)
+    # Get user's family group
+    family_group = request.user.family_groups.first() or request.user.owned_families.first()
+    
+    # Get recipe and ensure it belongs to user's family
+    recipe = get_object_or_404(Recipe, id=recipe_id, family_group=family_group)
     context = {
         'recipe': recipe,
     }
     return render(request, 'recipes/recipe_edit.html', context)
 
 
+@login_required
 @require_http_methods(["GET"])
 def get_recipes(request):
-    """Get all recipes with optional search"""
+    """Get all recipes for the user's family with optional search"""
     query = request.GET.get('q', '')
     
+    # Get user's family group
+    family_group = request.user.family_groups.first() or request.user.owned_families.first()
+    
+    if family_group:
+        recipes = Recipe.objects.filter(family_group=family_group)
+    else:
+        recipes = Recipe.objects.none()
+    
     if query:
-        recipes = Recipe.objects.filter(
+        recipes = recipes.filter(
             Q(title__icontains=query) | Q(description__icontains=query)
         ).order_by('-average_rating', '-created_at')
     else:
-        recipes = Recipe.objects.all().order_by('-created_at')
+        recipes = recipes.order_by('-created_at')
     
     recipes_data = []
     for recipe in recipes:
@@ -158,6 +189,7 @@ def get_recipe(request, recipe_id):
     return JsonResponse(recipe_data)
 
 
+@login_required
 @csrf_exempt
 @require_http_methods(["POST"])
 def scrape_recipe(request):
@@ -167,6 +199,11 @@ def scrape_recipe(request):
         url = data.get('url')
         save_directly = data.get('save_directly', False)
         enable_cleaning = data.get('enable_cleaning', True)  # Default to True
+        
+        # Get user's family group
+        family_group = request.user.family_groups.first() or request.user.owned_families.first()
+        if not family_group:
+            return JsonResponse({'error': 'No family group found'}, status=400)
         
         if not url:
             return JsonResponse({'error': 'URL is required'}, status=400)
@@ -192,6 +229,8 @@ def scrape_recipe(request):
                     prep_time_minutes=scraped_data.get('prep_time_minutes'),
                     cook_time_minutes=scraped_data.get('cook_time_minutes'),
                     servings=scraped_data.get('servings'),
+                    family_group=family_group,
+                    created_by=request.user,
                 )
                 
                 # Create ingredients
@@ -249,12 +288,18 @@ def scrape_recipe(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@login_required
 @csrf_exempt
 @require_http_methods(["POST"])
 def create_recipe(request):
     """Create a new recipe from scratch or from scraped data"""
     try:
         data = json.loads(request.body)
+        
+        # Get user's family group
+        family_group = request.user.family_groups.first() or request.user.owned_families.first()
+        if not family_group:
+            return JsonResponse({'error': 'No family group found'}, status=400)
         
         # Create the recipe
         recipe = Recipe.objects.create(
@@ -264,7 +309,9 @@ def create_recipe(request):
             source_url=data.get('source_url', ''),
             prep_time_minutes=data.get('prep_time_minutes'),
             cook_time_minutes=data.get('cook_time_minutes'),
-            servings=data.get('servings')
+            servings=data.get('servings'),
+            family_group=family_group,
+            created_by=request.user
         )
         
         # Create ingredients
@@ -304,12 +351,19 @@ def create_recipe(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@login_required
 @csrf_exempt
 @require_http_methods(["POST"])
 def clone_recipe(request, recipe_id):
     """Clone and modify a recipe"""
     try:
-        original_recipe = get_object_or_404(Recipe, id=recipe_id)
+        # Get user's family group
+        family_group = request.user.family_groups.first() or request.user.owned_families.first()
+        if not family_group:
+            return JsonResponse({'error': 'No family group found'}, status=400)
+        
+        # Get recipe and ensure it belongs to user's family
+        original_recipe = get_object_or_404(Recipe, id=recipe_id, family_group=family_group)
         data = json.loads(request.body)
         
         with transaction.atomic():
@@ -324,6 +378,8 @@ def clone_recipe(request, recipe_id):
                 servings=data.get('servings', original_recipe.servings),
                 is_cloned=True,
                 original_recipe=original_recipe,
+                family_group=family_group,
+                created_by=request.user,
             )
             
             # Create ingredients
@@ -378,6 +434,7 @@ def clone_recipe(request, recipe_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@login_required
 @csrf_exempt
 def update_recipe(request, recipe_id):
     """Update a recipe"""
@@ -388,7 +445,13 @@ def update_recipe(request, recipe_id):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
     try:
-        recipe = get_object_or_404(Recipe, id=recipe_id)
+        # Get user's family group
+        family_group = request.user.family_groups.first() or request.user.owned_families.first()
+        if not family_group:
+            return JsonResponse({'error': 'No family group found'}, status=400)
+        
+        # Get recipe and ensure it belongs to user's family
+        recipe = get_object_or_404(Recipe, id=recipe_id, family_group=family_group)
         data = json.loads(request.body)
         
         with transaction.atomic():
