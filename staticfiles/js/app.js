@@ -120,7 +120,12 @@ class RecipeApp {
             if (params.toString()) url += '?' + params.toString();
             
             const response = await fetch(url);
-            if (!response.ok) throw new Error('Failed to load recipes');
+            
+            // Check if response is HTML (likely authentication redirect)
+            const contentType = response.headers.get("content-type");
+            if (!response.ok || !contentType || !contentType.includes("application/json")) {
+                throw new Error('Failed to load recipes - authentication required');
+            }
             
             this.recipes = await response.json();
             this.renderRecipes();
@@ -1197,13 +1202,18 @@ class RecipeApp {
     }
 
     showLoading() {
-        document.getElementById('loadingState').classList.remove('hidden');
-        document.getElementById('recipeGrid').classList.add('hidden');
-        document.getElementById('emptyState').classList.add('hidden');
+        const loadingState = document.getElementById('loadingState');
+        const recipeGrid = document.getElementById('recipeGrid');
+        const emptyState = document.getElementById('emptyState');
+        
+        if (loadingState) loadingState.classList.remove('hidden');
+        if (recipeGrid) recipeGrid.classList.add('hidden');
+        if (emptyState) emptyState.classList.add('hidden');
     }
 
     hideLoading() {
-        document.getElementById('loadingState').classList.add('hidden');
+        const loadingState = document.getElementById('loadingState');
+        if (loadingState) loadingState.classList.add('hidden');
     }
 
     showToast(message, type = 'info') {
@@ -1540,5 +1550,7 @@ class RecipeApp {
     }
 }
 
-// Initialize the app
-const app = new RecipeApp();
+// Initialize the app when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    window.app = new RecipeApp();
+});

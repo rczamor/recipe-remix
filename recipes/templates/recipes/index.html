@@ -101,9 +101,9 @@
                         Add Recipe
                     </button>
                     
-                    <!-- Mobile Add Recipe Button (+ only) -->
-                    <button id="mobileAddBtn" class="sm:hidden bg-orange-500 hover:bg-orange-600 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors">
-                        <i class="fas fa-plus"></i>
+                    <!-- Mobile Add Recipe Button (+ only) - fixed visibility -->
+                    <button id="mobileAddBtn" class="block sm:hidden bg-orange-500 hover:bg-orange-600 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-lg">
+                        <i class="fas fa-plus text-lg"></i>
                     </button>
                     
                     <!-- Mobile Menu Button -->
@@ -358,5 +358,24 @@
     <script src="/static/js/app.js"></script>
     <script src="/static/js/chat-assistant.js"></script>
     <script src="/static/js/meal-calendar.js"></script>
+    <script>
+        // Fix for any missing element references that might cause errors
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure mobileSearchInput error doesn't break the app
+            const mobileSearchInput = document.getElementById('mobileSearchInput');
+            if (!mobileSearchInput) {
+                // Create a dummy element to prevent errors
+                window.mobileSearchInput = { addEventListener: function() {} };
+            }
+            
+            // Make sure the mobile add button has proper click handler
+            const mobileAddBtn = document.getElementById('mobileAddBtn');
+            if (mobileAddBtn && window.app) {
+                mobileAddBtn.addEventListener('click', () => {
+                    window.app.showAddRecipeModal();
+                });
+            }
+        });
+    </script>
 </body>
 </html>
