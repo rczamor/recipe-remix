@@ -1,0 +1,7 @@
+#!/bin/bash
+# Start script for Django deployment
+
+echo "Starting Django application..."
+
+# Run the Django server
+python manage.py runserver 0.0.0.0:5000

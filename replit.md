@@ -124,7 +124,7 @@ Preferred communication style: Simple, everyday language.
 - **DEBUG**: Django debug mode (development vs production)
 - **SECRET_KEY**: Django security key for sessions and CSRF
 
-### Current Status (July 30, 2025)
+### Current Status (August 21, 2025)
 - ✓ Successfully migrated from Node.js/React to Django
 - ✓ Django server running properly on port 5000
 - ✓ Database migrations applied successfully
@@ -143,5 +143,16 @@ Preferred communication style: Simple, everyday language.
 - ✓ Fixed image gallery to only display when recipes have associated images
 - ✓ Integrated AI recipe cleaning service using Grok LLM via Langchain to fix errors in scraped recipes
 - ✓ Added toggle option for AI cleaning when importing recipes
+- ✓ **Deployment Configuration Fixed**: Added proper build and start scripts for Replit deployment
+  - Added STATIC_ROOT setting to Django configuration for proper static file collection
+  - Created alternative script system (package-scripts.js, run-build, run-start) to handle missing npm scripts
+  - Build process now properly collects 130+ static files and runs migrations
+  - All deployment scripts tested and working correctly
 
-The application now runs as a pure Django web application with server-side rendering, vanilla JavaScript for client-side interactivity, comprehensive revision history tracking, dedicated recipe detail pages, AI-powered assistant, meal planning features, and intelligent recipe data cleaning.
+### Deployment Setup
+- **Build Command**: `./run-build` or `node package-scripts.js build`
+- **Start Command**: `./run-start` or `node package-scripts.js start`
+- **Static Files**: Configured with STATIC_ROOT for production deployment
+- **Database**: Migrations automatically applied during build process
+
+The application is now fully configured for deployment with proper build and start script alternatives that handle the Django-specific requirements while working within the existing npm-based deployment system.

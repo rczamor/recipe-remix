@@ -1,0 +1,4 @@
+#!/bin/bash
+# Alternative build script for deployment
+echo "Running Django build process..."
+node package-scripts.js build

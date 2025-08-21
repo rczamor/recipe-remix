@@ -1,0 +1,4 @@
+#!/bin/bash
+# Alternative start script for deployment
+echo "Starting Django application..."
+node package-scripts.js start
