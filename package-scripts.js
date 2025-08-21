@@ -22,7 +22,7 @@ const scripts = {
   start: () => {
     console.log('Starting Django application...');
     try {
-      execSync('python manage.py runserver 0.0.0.0:5000', { stdio: 'inherit' });
+      execSync('python manage.py runserver 0.0.0.0:8000', { stdio: 'inherit' });
     } catch (error) {
       console.error('Failed to start server:', error.message);
       process.exit(1);
@@ -32,7 +32,7 @@ const scripts = {
   dev: () => {
     console.log('Starting Django development server...');
     try {
-      execSync('python manage.py runserver 0.0.0.0:5000', { stdio: 'inherit' });
+      execSync('python manage.py runserver 0.0.0.0:8000', { stdio: 'inherit' });
     } catch (error) {
       console.error('Failed to start development server:', error.message);
       process.exit(1);

@@ -11,7 +11,7 @@ if (args[0] === 'run') {
     console.log('Redirecting to Django start process...');
     execSync('node package-scripts.js start', { stdio: 'inherit' });
   } else if (args[1] === 'dev') {
-    execSync('python manage.py runserver 0.0.0.0:5000', { stdio: 'inherit' });
+    execSync('python manage.py runserver 0.0.0.0:8000', { stdio: 'inherit' });
   } else {
     console.log(`Script "${args[1]}" not found`);
     process.exit(1);

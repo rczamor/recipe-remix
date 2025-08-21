@@ -108,7 +108,7 @@ Preferred communication style: Simple, everyday language.
 ## Deployment Strategy
 
 ### Development
-- **Application**: Django development server on port 5000
+- **Application**: Django development server on port 8000
 - **Database**: PostgreSQL with Django ORM and migrations
 - **Static Files**: Served directly by Django during development
 - **Hot Reload**: Django auto-reloads on code changes
@@ -126,7 +126,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Current Status (August 21, 2025)
 - ✓ Successfully migrated from Node.js/React to Django
-- ✓ Django server running properly on port 5000
+- ✓ Django server running properly on port 8000
 - ✓ Database migrations applied successfully
 - ✓ Application serving homepage correctly
 - ✓ All Django checks passing without issues

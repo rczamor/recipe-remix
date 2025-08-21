@@ -15,7 +15,7 @@ Since the package.json cannot be directly modified, alternative script implement
    - Runs database migrations using `python manage.py migrate`
 
 2. **Start Script**: `./run-start` or `node package-scripts.js start`
-   - Starts the Django server using `python manage.py runserver 0.0.0.0:5000`
+   - Starts the Django server using `python manage.py runserver 0.0.0.0:8000`
 
 3. **Development Script**: `npm run dev` or `node package-scripts.js dev`
    - Starts the Django development server
@@ -49,7 +49,7 @@ The deployment system can reference these scripts instead of the missing npm scr
 
 Both scripts have been tested and are working correctly:
 - Build process collects 130+ static files and applies migrations
-- Start process launches the Django server on port 5000
+- Start process launches the Django server on port 8000
 
 ## Alternative Deployment Configuration
 
@@ -59,7 +59,7 @@ If the deployment system still requires npm scripts, the .replit file deployment
 [deployment]
 deploymentTarget = "autoscale"
 build = ["python", "manage.py", "collectstatic", "--noinput"]
-run = ["python", "manage.py", "runserver", "0.0.0.0:5000"]
+run = ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 ```
 
 However, since the .replit file cannot be modified directly, the alternative script approach provides the same functionality.
