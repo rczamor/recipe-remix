@@ -5,5 +5,5 @@ modules = ["python-3.11"]
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["python3", "manage.py", "collectstatic", "--noinput"]
-run = ["python3", "manage.py", "runserver", "0.0.0.0:5000"]
+build = ["python", "manage.py", "collectstatic", "--noinput"]
+run = ["python", "manage.py", "runserver", "0.0.0.0:5000"]
