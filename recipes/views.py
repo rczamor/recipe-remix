@@ -1246,33 +1246,78 @@ def user_signup(request):
         password2 = request.POST.get("password2")
         family_name = request.POST.get("family_name", "")
         
+        # Debug logging
+        print(f"Signup attempt - Username: {username}, Email: {email}")
+        print(f"Form data received: {request.POST}")
+        
         # Validation
+        if not username or not email or not password1:
+            messages.error(request, "Please fill in all required fields.")
+            print("Missing required fields")
+            return render(request, "recipes/signup.html")
+            
         if password1 != password2:
             messages.error(request, "Passwords do not match.")
+            print("Passwords do not match")
             return render(request, "recipes/signup.html")
         
         if User.objects.filter(username=username).exists():
             messages.error(request, "Username already exists.")
+            print(f"Username {username} already exists")
             return render(request, "recipes/signup.html")
         
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already registered.")
+            print(f"Email {email} already registered")
             return render(request, "recipes/signup.html")
         
-        # Create user
-        user = User.objects.create_user(username=username, email=email, password=password1)
+        # Validate password using Django's validators
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError
         
-        # Create family group
-        family_group = FamilyGroup.objects.create(
-            name=family_name or f"{username}'s Family",
-            owner=user
-        )
-        family_group.members.add(user)
+        try:
+            # Validate password against Django's password validators
+            validate_password(password1, user=None)
+        except ValidationError as e:
+            for error in e.messages:
+                messages.error(request, error)
+                print(f"Password validation error: {error}")
+            return render(request, "recipes/signup.html")
         
-        # Log the user in
-        login(request, user)
-        messages.success(request, "Account created successfully! Welcome to Recipe Remix!")
-        return redirect("home")
+        try:
+            # Create user
+            user = User.objects.create_user(username=username, email=email, password=password1)
+            print(f"User created successfully: {user.username}")
+            
+            # Create family group
+            family_group = FamilyGroup.objects.create(
+                name=family_name or f"{username}'s Family",
+                owner=user
+            )
+            family_group.members.add(user)
+            print(f"Family group created: {family_group.name}")
+            
+            # Log the user in
+            login(request, user)
+            messages.success(request, "Account created successfully! Welcome to Recipe Remix!")
+            print(f"User {user.username} logged in successfully")
+            return redirect("home")
+            
+        except ValidationError as e:
+            print(f"Validation error during user creation: {str(e)}")
+            for error in e.messages:
+                messages.error(request, error)
+            # If user was created but something else failed, delete the user
+            if 'user' in locals():
+                user.delete()
+            return render(request, "recipes/signup.html")
+        except Exception as e:
+            print(f"Error during user creation: {str(e)}")
+            messages.error(request, f"An error occurred during registration: {str(e)}")
+            # If user was created but something else failed, delete the user
+            if 'user' in locals():
+                user.delete()
+            return render(request, "recipes/signup.html")
     
     return render(request, "recipes/signup.html")
 

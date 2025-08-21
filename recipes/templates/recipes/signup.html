@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,14 +48,12 @@
             <p class="text-gray-600">Create Your Family's Recipe Collection</p>
         </div>
         
-        {% if form.errors %}
-            <div class="mb-4 p-3 rounded-lg bg-red-100 text-red-700">
-                {% for field, errors in form.errors.items %}
-                    {% for error in errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
-                {% endfor %}
-            </div>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-3 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
         {% endif %}
         
         <form method="post" action="{% url 'signup' %}">
@@ -101,5 +100,53 @@
             </p>
         </div>
     </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const submitBtn = document.querySelector('button[type="submit"]');
+        
+        // Log form submission
+        form.addEventListener('submit', function(e) {
+            console.log('Form is being submitted');
+            const formData = new FormData(form);
+            for (let pair of formData.entries()) {
+                if (pair[0] !== 'csrfmiddlewaretoken' && !pair[0].includes('password')) {
+                    console.log(`${pair[0]}: ${pair[1]}`);
+                }
+            }
+            
+            // Check if all required fields are filled
+            const required = form.querySelectorAll('[required]');
+            let allFilled = true;
+            required.forEach(field => {
+                if (!field.value.trim()) {
+                    console.error(`Required field empty: ${field.name}`);
+                    allFilled = false;
+                }
+            });
+            
+            if (!allFilled) {
+                console.error('Some required fields are empty');
+                // Allow default HTML5 validation to handle it
+            }
+            
+            // The form will submit normally
+            console.log('Form validation passed, submitting...');
+        });
+        
+        // Visual feedback on button click
+        submitBtn.addEventListener('click', function() {
+            console.log('Submit button clicked');
+        });
+        
+        // Check for any JavaScript errors
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript error:', e.message);
+        });
+        
+        console.log('Signup form debugging enabled');
+    });
+    </script>
 </body>
 </html>
