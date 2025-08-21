@@ -12,3 +12,7 @@ REPLIT_KEEP_PACKAGE_DEV_DEPENDENCIES = "1"
 deploymentTarget = "autoscale"
 build = ["python3", "manage.py", "collectstatic", "--noinput"]
 run = ["python3", "manage.py", "runserver", "0.0.0.0:5000"]
+
+[[ports]]
+localPort = 8000
+externalPort = 80
