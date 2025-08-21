@@ -5,7 +5,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.db.models import Q, Avg, Count
+from django.db.models import Q, Avg, Count, F
+from django.db import models
 from django.db import transaction
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -96,8 +97,9 @@ def recipe_edit(request, recipe_id):
 @login_required
 @require_http_methods(["GET"])
 def get_recipes(request):
-    """Get all recipes for the user's family with optional search"""
+    """Get all recipes for the user's family with optional search and filters"""
     query = request.GET.get('q', '')
+    filter_type = request.GET.get('filter', '')
     
     # Get user's family group
     family_group = request.user.family_groups.first() or request.user.owned_families.first()
@@ -107,10 +109,34 @@ def get_recipes(request):
     else:
         recipes = Recipe.objects.none()
     
+    # Apply search query
     if query:
         recipes = recipes.filter(
             Q(title__icontains=query) | Q(description__icontains=query)
-        ).order_by('-average_rating', '-created_at')
+        )
+    
+    # Apply filters
+    if filter_type == 'highly-rated':
+        # Filter recipes with average rating >= 4
+        recipes = recipes.filter(average_rating__gte=4)
+    elif filter_type == 'quick':
+        # Filter recipes with total time <= 30 minutes
+        recipes = recipes.annotate(
+            total_time=models.F('prep_time_minutes') + models.F('cook_time_minutes')
+        ).filter(total_time__lte=30)
+    elif filter_type == 'recent':
+        # Filter recipes added in the past week
+        week_ago = datetime.now() - timedelta(days=7)
+        recipes = recipes.filter(created_at__gte=week_ago)
+    elif filter_type == 'favorites':
+        # Filter favorited recipes
+        recipes = recipes.filter(is_favorite=True)
+    
+    # Order results
+    if filter_type == 'highly-rated':
+        recipes = recipes.order_by('-average_rating', '-created_at')
+    elif filter_type == 'recent':
+        recipes = recipes.order_by('-created_at')
     else:
         recipes = recipes.order_by('-created_at')
     

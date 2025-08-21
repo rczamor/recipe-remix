@@ -13,11 +13,22 @@ class MealCalendarPage {
     }
 
     init() {
+        this.isMobile = window.innerWidth < 768;
+        this.currentDay = new Date();
         this.updateWeekDisplay();
         this.renderCalendarGrid();
         this.loadRecipes();
         this.loadMealPlans();
         this.bindEvents();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const wasMobile = this.isMobile;
+            this.isMobile = window.innerWidth < 768;
+            if (wasMobile !== this.isMobile) {
+                this.renderCalendarGrid();
+            }
+        });
     }
 
     getWeekStart(date) {
@@ -43,6 +54,14 @@ class MealCalendarPage {
     }
 
     renderCalendarGrid() {
+        if (this.isMobile) {
+            this.renderMobileView();
+        } else {
+            this.renderDesktopView();
+        }
+    }
+    
+    renderDesktopView() {
         const calendarDays = document.getElementById('calendarDays');
         if (!calendarDays) return;
         
@@ -85,6 +104,51 @@ class MealCalendarPage {
             
             calendarDays.appendChild(dayDiv);
         }
+        
+        this.setupDragAndDrop();
+    }
+    
+    renderMobileView() {
+        const mobileDayView = document.getElementById('mobileDayView');
+        if (!mobileDayView) return;
+        
+        const dateStr = this.formatDate(this.currentDay);
+        
+        mobileDayView.innerHTML = '';
+        
+        // Date header
+        const dateHeader = document.createElement('div');
+        dateHeader.className = 'text-lg font-semibold text-gray-800 mb-4';
+        dateHeader.textContent = this.currentDay.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        mobileDayView.appendChild(dateHeader);
+        
+        // Meal slots
+        this.mealTypes.forEach(mealType => {
+            const mealSection = document.createElement('div');
+            mealSection.className = 'mb-4';
+            
+            const mealLabel = document.createElement('h3');
+            mealLabel.className = 'text-md font-semibold text-gray-700 capitalize mb-2';
+            mealLabel.textContent = mealType;
+            mealSection.appendChild(mealLabel);
+            
+            const mealSlot = document.createElement('div');
+            mealSlot.className = 'meal-slot bg-gray-50 rounded-lg p-3 min-h-[60px]';
+            mealSlot.dataset.date = dateStr;
+            mealSlot.dataset.mealType = mealType;
+            
+            const mealContent = document.createElement('div');
+            mealContent.className = 'meal-content';
+            mealContent.id = `meal-${dateStr}-${mealType}`;
+            mealSlot.appendChild(mealContent);
+            
+            mealSection.appendChild(mealSlot);
+            mobileDayView.appendChild(mealSection);
+        });
         
         this.setupDragAndDrop();
     }

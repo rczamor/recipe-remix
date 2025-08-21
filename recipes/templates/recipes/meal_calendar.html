@@ -82,26 +82,58 @@
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="text-2xl logo-text">Recipe Remix</a>
-                    <nav class="hidden md:flex space-x-4">
-                        <a href="/" class="text-gray-600 hover:text-gray-900">Recipes</a>
-                        <a href="/meal-calendar/" class="text-orange-500 font-medium">Meal Calendar</a>
-                        <a href="/shopping-lists/" class="text-gray-600 hover:text-gray-900">Shopping Lists</a>
-                    </nav>
+                <!-- Left side - Logo -->
+                <div class="flex items-center space-x-2">
+                    <h1 class="text-xl sm:text-2xl logo-text">Recipe Remix</h1>
                 </div>
-                
-                <!-- User Menu -->
-                <div class="relative group">
-                    <button class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 p-2">
-                        <i class="fas fa-user-circle text-xl"></i>
-                        <span class="hidden sm:inline">{{ user.username }}</span>
+
+                <!-- Center - Desktop Navigation -->
+                <nav class="hidden md:flex items-center space-x-6">
+                    <a href="/" class="text-gray-600 hover:text-gray-900">Recipes</a>
+                    <a href="/meal-calendar/" class="text-orange-500 font-medium">Meal Calendar</a>
+                    <a href="/shopping-lists/" class="text-gray-600 hover:text-gray-900">Shopping Lists</a>
+                </nav>
+
+                <!-- Right side - Action Buttons -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <!-- Mobile Menu Button -->
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-gray-900 p-2">
+                        <i class="fas fa-bars text-xl"></i>
                     </button>
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden group-hover:block z-50">
-                        <div class="p-3 border-b border-gray-200">
+                    
+                    <!-- Desktop User Menu -->
+                    <div class="relative group hidden md:block">
+                        <button class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 p-2">
+                            <i class="fas fa-user-circle text-xl"></i>
+                            <span class="hidden lg:inline">{{ user.username }}</span>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden group-hover:block">
+                            <div class="p-3 border-b border-gray-200">
+                                <p class="text-sm font-medium text-gray-900">{{ user.username }}</p>
+                                <p class="text-xs text-gray-500">{{ family_group.name }}</p>
+                            </div>
+                            <a href="{% url 'family_settings' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-users mr-2"></i>Family Settings
+                            </a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu (hidden by default) -->
+            <div id="mobileMenu" class="hidden md:hidden pb-4 border-t border-gray-200">
+                <nav class="pt-4 space-y-2">
+                    <a href="/" class="block px-4 py-2 text-gray-600 hover:text-gray-900">Recipes</a>
+                    <a href="/meal-calendar/" class="block px-4 py-2 text-orange-500 font-medium">Meal Calendar</a>
+                    <a href="/shopping-lists/" class="block px-4 py-2 text-gray-600 hover:text-gray-900">Shopping Lists</a>
+                    <div class="border-t border-gray-200 mt-2 pt-2">
+                        <div class="px-4 py-2">
                             <p class="text-sm font-medium text-gray-900">{{ user.username }}</p>
                             <p class="text-xs text-gray-500">{{ family_group.name }}</p>
                         </div>
@@ -112,45 +144,64 @@
                             <i class="fas fa-sign-out-alt mr-2"></i>Logout
                         </a>
                     </div>
-                </div>
+                </nav>
             </div>
         </div>
     </header>
+    
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="bg-white rounded-lg shadow-lg p-6">
             <!-- Calendar Header -->
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Meal Planning Calendar</h2>
-                <div class="flex items-center space-x-4">
-                    <button id="prevWeekBtn" class="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Meal Planning</h2>
+                <div class="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4">
+                    <button id="prevBtn" class="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">
                         <i class="fas fa-chevron-left"></i>
                     </button>
-                    <span id="weekDisplay" class="font-medium text-gray-700"></span>
-                    <button id="nextWeekBtn" class="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">
+                    <span id="dateDisplay" class="font-medium text-gray-700 text-sm sm:text-base"></span>
+                    <button id="nextBtn" class="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">
                         <i class="fas fa-chevron-right"></i>
                     </button>
-                    <button id="generateShoppingListBtn" class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
-                        <i class="fas fa-shopping-cart mr-2"></i>Generate Shopping List
+                    <button id="generateShoppingListBtn" class="hidden sm:block px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+                        <i class="fas fa-shopping-cart mr-2"></i>Generate List
+                    </button>
+                    <button id="mobileShoppingBtn" class="sm:hidden p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+                        <i class="fas fa-shopping-cart"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Calendar Grid -->
-            <div class="grid grid-cols-7 gap-2">
-                <!-- Day Headers -->
-                <div class="text-center font-semibold text-gray-700 pb-2">Sunday</div>
-                <div class="text-center font-semibold text-gray-700 pb-2">Monday</div>
-                <div class="text-center font-semibold text-gray-700 pb-2">Tuesday</div>
-                <div class="text-center font-semibold text-gray-700 pb-2">Wednesday</div>
-                <div class="text-center font-semibold text-gray-700 pb-2">Thursday</div>
-                <div class="text-center font-semibold text-gray-700 pb-2">Friday</div>
-                <div class="text-center font-semibold text-gray-700 pb-2">Saturday</div>
+            <!-- Desktop Calendar Grid -->
+            <div id="desktopCalendar" class="hidden md:block">
+                <div class="grid grid-cols-7 gap-2">
+                    <!-- Day Headers -->
+                    <div class="text-center font-semibold text-gray-700 pb-2">Sunday</div>
+                    <div class="text-center font-semibold text-gray-700 pb-2">Monday</div>
+                    <div class="text-center font-semibold text-gray-700 pb-2">Tuesday</div>
+                    <div class="text-center font-semibold text-gray-700 pb-2">Wednesday</div>
+                    <div class="text-center font-semibold text-gray-700 pb-2">Thursday</div>
+                    <div class="text-center font-semibold text-gray-700 pb-2">Friday</div>
+                    <div class="text-center font-semibold text-gray-700 pb-2">Saturday</div>
 
-                <!-- Calendar Days -->
-                <div id="calendarDays" class="col-span-7 grid grid-cols-7 gap-2">
-                    <!-- Days will be generated by JavaScript -->
+                    <!-- Calendar Days -->
+                    <div id="calendarDays" class="col-span-7 grid grid-cols-7 gap-2">
+                        <!-- Days will be generated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mobile Calendar (Single Day View) -->
+            <div id="mobileCalendar" class="md:hidden">
+                <div id="mobileDayView" class="bg-white border border-gray-200 rounded-lg p-4">
+                    <!-- Mobile day view will be generated by JavaScript -->
                 </div>
             </div>
         </div>

@@ -81,43 +81,41 @@
     <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <!-- Left side - Logo and Title -->
-                <div class="flex items-center space-x-4 flex-shrink-0">
-                    <h1 class="text-2xl logo-text">Recipe Remix</h1>
-                    <span class="text-xs text-gray-500 font-medium hidden sm:inline">Your Family's Culinary Collection</span>
+                <!-- Left side - Logo -->
+                <div class="flex items-center space-x-2">
+                    <h1 class="text-xl sm:text-2xl logo-text">Recipe Remix</h1>
                 </div>
 
-                <!-- Center - Search Bar (Desktop only) -->
-                <div class="hidden md:block flex-1 max-w-lg mx-8">
-                    <div class="relative">
-                        <input
-                            type="text"
-                            id="searchInput"
-                            placeholder="Search recipes..."
-                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        />
-                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    </div>
-                </div>
+                <!-- Center - Desktop Navigation -->
+                <nav class="hidden md:flex items-center space-x-6">
+                    <a href="/" class="text-orange-500 font-medium">Recipes</a>
+                    <a href="/meal-calendar/" class="text-gray-600 hover:text-gray-900">Meal Calendar</a>
+                    <a href="/shopping-lists/" class="text-gray-600 hover:text-gray-900">Shopping Lists</a>
+                </nav>
 
                 <!-- Right side - Action Buttons -->
-                <div class="flex items-center space-x-3 flex-shrink-0">
-                    <button id="addRecipeBtn" style="background: #ff6b35 !important; color: white !important; padding: 8px 16px !important; border-radius: 8px !important; font-weight: 500 !important; display: flex !important; align-items: center !important;">
-                        <i class="fas fa-plus" style="margin-right: 8px !important;"></i>
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <!-- Desktop Add Recipe Button -->
+                    <button id="addRecipeBtn" class="hidden sm:flex items-center bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <i class="fas fa-plus mr-2"></i>
                         Add Recipe
                     </button>
-                    <a href="/meal-calendar/" class="text-gray-600 hover:text-gray-900 p-2" title="Meal Planning Calendar">
-                        <i class="fas fa-calendar-alt text-xl"></i>
-                    </a>
-                    <button id="shoppingListBtn" class="text-gray-600 hover:text-gray-900 p-2" title="Shopping List">
-                        <i class="fas fa-shopping-cart text-xl"></i>
+                    
+                    <!-- Mobile Add Recipe Button (+ only) -->
+                    <button id="mobileAddBtn" class="sm:hidden bg-orange-500 hover:bg-orange-600 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors">
+                        <i class="fas fa-plus"></i>
                     </button>
                     
-                    <!-- User Menu -->
-                    <div class="relative group">
+                    <!-- Mobile Menu Button -->
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-gray-900 p-2">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    
+                    <!-- Desktop User Menu -->
+                    <div class="relative group hidden md:block">
                         <button class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 p-2">
                             <i class="fas fa-user-circle text-xl"></i>
-                            <span class="hidden sm:inline">{{ user.username }}</span>
+                            <span class="hidden lg:inline">{{ user.username }}</span>
                         </button>
                         <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden group-hover:block">
                             <div class="p-3 border-b border-gray-200">
@@ -127,7 +125,7 @@
                             <a href="{% url 'family_settings' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <i class="fas fa-users mr-2"></i>Family Settings
                             </a>
-                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200">
                                 <i class="fas fa-sign-out-alt mr-2"></i>Logout
                             </a>
                         </div>
@@ -135,12 +133,33 @@
                 </div>
             </div>
 
-            <!-- Mobile Search -->
-            <div class="md:hidden pb-4">
+            <!-- Mobile Menu (hidden by default) -->
+            <div id="mobileMenu" class="hidden md:hidden pb-4 border-t border-gray-200">
+                <nav class="pt-4 space-y-2">
+                    <a href="/" class="block px-4 py-2 text-orange-500 font-medium">Recipes</a>
+                    <a href="/meal-calendar/" class="block px-4 py-2 text-gray-600 hover:text-gray-900">Meal Calendar</a>
+                    <a href="/shopping-lists/" class="block px-4 py-2 text-gray-600 hover:text-gray-900">Shopping Lists</a>
+                    <div class="border-t border-gray-200 mt-2 pt-2">
+                        <div class="px-4 py-2">
+                            <p class="text-sm font-medium text-gray-900">{{ user.username }}</p>
+                            <p class="text-xs text-gray-500">{{ family_group.name }}</p>
+                        </div>
+                        <a href="{% url 'family_settings' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-users mr-2"></i>Family Settings
+                        </a>
+                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- Search Bar (Full width on all screens) -->
+            <div class="pb-4">
                 <div class="relative">
                     <input
                         type="text"
-                        id="mobileSearchInput"
+                        id="searchInput"
                         placeholder="Search recipes..."
                         class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     />
@@ -149,6 +168,13 @@
             </div>
         </div>
     </header>
+    
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -159,18 +185,21 @@
         
         <!-- Quick Actions -->
         <div class="mb-8">
-            <div class="flex flex-wrap gap-4">
-                <button class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-star text-yellow-500 mr-2"></i>Highly Rated
+            <div class="flex flex-wrap gap-2 sm:gap-4">
+                <button data-filter="" class="filter-btn border border-gray-300 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base">
+                    <i class="fas fa-list text-gray-500 mr-1 sm:mr-2"></i>All
                 </button>
-                <button class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-clock text-orange-500 mr-2"></i>Quick Meals
+                <button data-filter="highly-rated" class="filter-btn border border-gray-300 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base">
+                    <i class="fas fa-star text-yellow-500 mr-1 sm:mr-2"></i>Highly Rated
                 </button>
-                <button class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-calendar text-green-500 mr-2"></i>Recently Added
+                <button data-filter="quick" class="filter-btn border border-gray-300 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base">
+                    <i class="fas fa-clock text-orange-500 mr-1 sm:mr-2"></i>Quick Meals
                 </button>
-                <button id="cleaningStatsBtn" onclick="app.showCleaningStats()" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-robot text-blue-500 mr-2"></i>AI Cleaning Stats
+                <button data-filter="recent" class="filter-btn border border-gray-300 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base">
+                    <i class="fas fa-calendar text-green-500 mr-1 sm:mr-2"></i>Recently Added
+                </button>
+                <button data-filter="favorites" class="filter-btn border border-gray-300 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base">
+                    <i class="fas fa-heart text-red-500 mr-1 sm:mr-2"></i>Favorites
                 </button>
             </div>
         </div>
@@ -182,7 +211,7 @@
         </div>
 
         <!-- Recipe Grid -->
-        <div id="recipeGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
+        <div id="recipeGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 hidden">
         </div>
 
         <!-- Empty State -->

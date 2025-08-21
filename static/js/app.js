@@ -14,75 +14,140 @@ class RecipeApp {
     }
 
     bindEvents() {
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            this.searchRecipes(e.target.value);
-        });
-        document.getElementById('mobileSearchInput').addEventListener('input', (e) => {
-            this.searchRecipes(e.target.value);
-        });
+        // Search functionality - check if elements exist
+        const searchInput = document.getElementById('searchInput');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchRecipes(e.target.value);
+            });
+        }
 
-        // Modal controls
-        document.getElementById('addRecipeBtn').addEventListener('click', () => {
-            this.showAddRecipeModal();
-        });
-        document.getElementById('emptyAddBtn').addEventListener('click', () => {
-            this.showAddRecipeModal();
-        });
-        document.getElementById('closeAddModal').addEventListener('click', () => {
-            this.hideAddRecipeModal();
-        });
-        document.getElementById('cancelAddBtn').addEventListener('click', () => {
-            this.hideAddRecipeModal();
-        });
+        // Modal controls - check if elements exist
+        const addRecipeBtn = document.getElementById('addRecipeBtn');
+        const mobileAddBtn = document.getElementById('mobileAddBtn');
+        const emptyAddBtn = document.getElementById('emptyAddBtn');
+        const closeAddModal = document.getElementById('closeAddModal');
+        const cancelAddBtn = document.getElementById('cancelAddBtn');
+        
+        if (addRecipeBtn) {
+            addRecipeBtn.addEventListener('click', () => {
+                this.showAddRecipeModal();
+            });
+        }
+        
+        if (mobileAddBtn) {
+            mobileAddBtn.addEventListener('click', () => {
+                this.showAddRecipeModal();
+            });
+        }
+        
+        if (emptyAddBtn) {
+            emptyAddBtn.addEventListener('click', () => {
+                this.showAddRecipeModal();
+            });
+        }
+        
+        if (closeAddModal) {
+            closeAddModal.addEventListener('click', () => {
+                this.hideAddRecipeModal();
+            });
+        }
+        
+        if (cancelAddBtn) {
+            cancelAddBtn.addEventListener('click', () => {
+                this.hideAddRecipeModal();
+            });
+        }
 
         // Import recipe
-        document.getElementById('importRecipeBtn').addEventListener('click', () => {
-            console.log('Import Recipe button clicked');
-            this.importRecipe();
-        });
+        const importRecipeBtn = document.getElementById('importRecipeBtn');
+        if (importRecipeBtn) {
+            importRecipeBtn.addEventListener('click', () => {
+                console.log('Import Recipe button clicked');
+                this.importRecipe();
+            });
+        }
 
         // Shopping list - Navigate to shopping lists page
-        document.getElementById('shoppingListBtn').addEventListener('click', () => {
-            window.location.href = '/shopping-lists/';
-        });
-        document.getElementById('closeSidebar').addEventListener('click', () => {
-            this.hideShoppingList();
-        });
+        const shoppingListBtn = document.getElementById('shoppingListBtn');
+        if (shoppingListBtn) {
+            shoppingListBtn.addEventListener('click', () => {
+                window.location.href = '/shopping-lists/';
+            });
+        }
         
-        // Meal Calendar
-        document.getElementById('mealCalendarBtn').addEventListener('click', () => {
-            this.toggleMealCalendar();
-        });
-
+        const closeSidebar = document.getElementById('closeSidebar');
+        if (closeSidebar) {
+            closeSidebar.addEventListener('click', () => {
+                this.hideShoppingList();
+            });
+        }
+        
+        // Meal Calendar - removed as it doesn't exist as a button
+        
         // Close modals on backdrop click
-        document.getElementById('addRecipeModal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                this.hideAddRecipeModal();
-            }
-        });
-        document.getElementById('recipeModal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                this.hideRecipeModal();
-            }
-        });
+        const addRecipeModal = document.getElementById('addRecipeModal');
+        const recipeModal = document.getElementById('recipeModal');
+        
+        if (addRecipeModal) {
+            addRecipeModal.addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) {
+                    this.hideAddRecipeModal();
+                }
+            });
+        }
+        
+        if (recipeModal) {
+            recipeModal.addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) {
+                    this.hideRecipeModal();
+                }
+            });
+        }
+        
+        // Filter buttons
+        this.initFilterButtons();
     }
 
-    async loadRecipes(query = '') {
+    async loadRecipes(query = '', filter = '') {
         this.showLoading();
         try {
-            const url = query ? `/api/recipes/?q=${encodeURIComponent(query)}` : '/api/recipes/';
+            let url = '/api/recipes/';
+            const params = new URLSearchParams();
+            if (query) params.append('q', query);
+            if (filter) params.append('filter', filter);
+            if (params.toString()) url += '?' + params.toString();
+            
             const response = await fetch(url);
             if (!response.ok) throw new Error('Failed to load recipes');
             
             this.recipes = await response.json();
             this.renderRecipes();
         } catch (error) {
-            this.showToast('Failed to load recipes', 'error');
             console.error('Error loading recipes:', error);
+            // Show empty state with CTA if error occurs
+            this.recipes = [];
+            this.renderRecipes();
         } finally {
             this.hideLoading();
         }
+    }
+    
+    initFilterButtons() {
+        // Get all filter buttons
+        const filterButtons = document.querySelectorAll('[data-filter]');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const filter = e.currentTarget.dataset.filter;
+                // Remove active state from all buttons
+                filterButtons.forEach(btn => btn.classList.remove('bg-orange-50', 'border-orange-500'));
+                // Add active state to clicked button
+                e.currentTarget.classList.add('bg-orange-50', 'border-orange-500');
+                // Load recipes with filter
+                this.loadRecipes('', filter);
+            });
+        });
     }
 
     searchRecipes(query) {
