@@ -16,3 +16,14 @@ run = ["python3", "manage.py", "runserver", "0.0.0.0:5000"]
 [[ports]]
 localPort = 8000
 externalPort = 80
+
+[workflows]
+
+[[workflows.workflow]]
+name = "Start app"
+mode = "sequential"
+author = 43955787
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./start.sh"
