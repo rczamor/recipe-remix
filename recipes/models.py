@@ -1,6 +1,33 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from django.contrib.auth.models import User
+import uuid
+
+
+class FamilyGroup(models.Model):
+    """Represents a family group for shared recipe management"""
+    name = models.CharField(max_length=100, default="My Family")
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_families')
+    members = models.ManyToManyField(User, related_name='family_groups', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.name} ({self.owner.username}'s family)"
+
+
+class FamilyInvitation(models.Model):
+    """Invitation to join a family group"""
+    family = models.ForeignKey(FamilyGroup, on_delete=models.CASCADE)
+    invite_code = models.CharField(max_length=50, unique=True, default=uuid.uuid4)
+    email = models.EmailField()
+    invited_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used = models.BooleanField(default=False)
+    used_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='used_invitations')
+    
+    def __str__(self):
+        return f"Invitation to {self.email} for {self.family.name}"
 
 
 class Recipe(models.Model):
@@ -27,6 +54,9 @@ class Recipe(models.Model):
     is_cloned = models.BooleanField(default=False)
     original_recipe = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
+    # Link recipe to family group
+    family_group = models.ForeignKey(FamilyGroup, on_delete=models.CASCADE, null=True, blank=True, related_name='recipes')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_recipes')
 
     class Meta:
         ordering = ['-created_at']
@@ -150,6 +180,8 @@ class MealPlan(models.Model):
     session_id = models.CharField(max_length=40)  # For anonymous meal planning
     created_at = models.DateTimeField(default=timezone.now)
     notes = models.TextField(blank=True)
+    family_group = models.ForeignKey(FamilyGroup, on_delete=models.CASCADE, null=True, blank=True, related_name='meal_plans')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     
     class Meta:
         ordering = ['date', 'meal_type']
@@ -165,6 +197,8 @@ class ShoppingList(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     created_at = models.DateTimeField(default=timezone.now)
+    family_group = models.ForeignKey(FamilyGroup, on_delete=models.CASCADE, null=True, blank=True, related_name='shopping_lists')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     
     class Meta:
         ordering = ['-created_at']

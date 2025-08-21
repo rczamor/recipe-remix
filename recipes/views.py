@@ -1,22 +1,45 @@
 import json
 from decimal import Decimal
 from datetime import datetime, timedelta
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Avg, Count
 from django.db import transaction
-from .models import Recipe, Ingredient, Instruction, Rating, RecipeRevision, ChatMessage, MealPlan, ShoppingList, ShoppingListItem, RecipeCleaningFeedback, CleaningRule
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
+import uuid
+from .models import Recipe, Ingredient, Instruction, Rating, RecipeRevision, ChatMessage, MealPlan, ShoppingList, ShoppingListItem, RecipeCleaningFeedback, CleaningRule, FamilyGroup, FamilyInvitation
 from .services import RecipeScrapingService, create_recipe_revision
 from .ai_assistant import RecipeAssistant
 from .meal_planning_service import MealPlanningService
 from .adaptive_cleaner import AdaptiveRecipeCleaner, initialize_default_rules
 
 
+@login_required
 def home(request):
     """Serve the main application page"""
-    return render(request, 'recipes/index.html')
+    # Make sure user has a family group
+    family_group = request.user.family_groups.first() or request.user.owned_families.first()
+    if not family_group:
+        # Create default family group for new user
+        family_group = FamilyGroup.objects.create(
+            name=f"{request.user.username}'s Family",
+            owner=request.user
+        )
+        family_group.members.add(request.user)
+    
+    context = {
+        'family_group': family_group,
+        'user': request.user
+    }
+    return render(request, 'recipes/index.html', context)
 
 
 def recipe_detail(request, recipe_id):
@@ -997,17 +1020,19 @@ def update_shopping_item(request, item_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@login_required
 def shopping_lists(request):
     """Display all shopping lists for the user"""
-    # Get or create session key
-    if not request.session.session_key:
-        request.session.create()
-    session_id = request.session.session_key
+    # Get user's family group
+    family_group = request.user.family_groups.first() or request.user.owned_families.first()
     
-    # Get shopping lists
-    shopping_lists = ShoppingList.objects.filter(
-        session_id=session_id
-    ).order_by('-created_at')
+    if family_group:
+        # Get shopping lists for the family
+        shopping_lists = ShoppingList.objects.filter(
+            family_group=family_group
+        ).order_by('-created_at')
+    else:
+        shopping_lists = []
     
     context = {
         'shopping_lists': shopping_lists,
@@ -1124,3 +1149,131 @@ def get_cleaning_stats(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+# Authentication Views
+def user_login(request):
+    """Handle user login"""
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            messages.success(request, f"Welcome back, {user.username}!")
+            return redirect("home")
+        else:
+            messages.error(request, "Invalid username or password.")
+    
+    return render(request, "recipes/login.html")
+
+
+def user_signup(request):
+    """Handle user registration"""
+    if request.method == "POST":
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        password1 = request.POST.get("password1")
+        password2 = request.POST.get("password2")
+        family_name = request.POST.get("family_name", "")
+        
+        # Validation
+        if password1 != password2:
+            messages.error(request, "Passwords do not match.")
+            return render(request, "recipes/signup.html")
+        
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists.")
+            return render(request, "recipes/signup.html")
+        
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered.")
+            return render(request, "recipes/signup.html")
+        
+        # Create user
+        user = User.objects.create_user(username=username, email=email, password=password1)
+        
+        # Create family group
+        family_group = FamilyGroup.objects.create(
+            name=family_name or f"{username}'s Family",
+            owner=user
+        )
+        family_group.members.add(user)
+        
+        # Log the user in
+        login(request, user)
+        messages.success(request, "Account created successfully! Welcome to Recipe Remix!")
+        return redirect("home")
+    
+    return render(request, "recipes/signup.html")
+
+
+@login_required
+def user_logout(request):
+    """Handle user logout"""
+    logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect("login")
+
+
+@login_required
+def family_settings(request):
+    """Manage family settings and invitations"""
+    family_group = request.user.owned_families.first() or request.user.family_groups.first()
+    
+    if not family_group:
+        messages.error(request, "No family group found.")
+        return redirect("home")
+    
+    if request.method == "POST":
+        action = request.POST.get("action")
+        
+        if action == "invite" and family_group.owner == request.user:
+            email = request.POST.get("email")
+            
+            # Create invitation
+            invitation = FamilyInvitation.objects.create(
+                family=family_group,
+                email=email,
+                invited_by=request.user,
+                invite_code=str(uuid.uuid4())
+            )
+            
+            messages.success(request, f"Invitation sent to {email}. Code: {invitation.invite_code}")
+    
+    invitations = FamilyInvitation.objects.filter(family=family_group, used=False)
+    
+    context = {
+        "family_group": family_group,
+        "invitations": invitations,
+        "is_owner": family_group.owner == request.user
+    }
+    return render(request, "recipes/family_settings.html", context)
+
+
+def join_family(request, invite_code=None):
+    """Join a family group using an invitation code"""
+    if request.method == "POST":
+        code = request.POST.get("invite_code") or invite_code
+        
+        try:
+            invitation = FamilyInvitation.objects.get(invite_code=code, used=False)
+            
+            if not request.user.is_authenticated:
+                messages.info(request, "Please log in or sign up to join this family.")
+                request.session["pending_invite"] = code
+                return redirect("login")
+            
+            # Add user to family
+            invitation.family.members.add(request.user)
+            invitation.used = True
+            invitation.used_by = request.user
+            invitation.save()
+            
+            messages.success(request, f"You have joined {invitation.family.name}!")
+            return redirect("home")
+            
+        except FamilyInvitation.DoesNotExist:
+            messages.error(request, "Invalid or expired invitation code.")
+    
+    return render(request, "recipes/join_family.html", {"invite_code": invite_code})

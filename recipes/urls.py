@@ -36,6 +36,14 @@ urlpatterns = [
     path('api/recipes/<int:recipe_id>/feedback/', views.submit_cleaning_feedback, name='submit_cleaning_feedback'),
     path('api/cleaning/stats/', views.get_cleaning_stats, name='get_cleaning_stats'),
     
+    # Authentication URLs
+    path('login/', views.user_login, name='login'),
+    path('signup/', views.user_signup, name='signup'),
+    path('logout/', views.user_logout, name='logout'),
+    path('family-settings/', views.family_settings, name='family_settings'),
+    path('join-family/', views.join_family, name='join_family'),
+    path('join-family/<str:invite_code>/', views.join_family, name='join_family_with_code'),
+    
     # Main app page
     path('', views.home, name='home'),
     path('recipe/<int:recipe_id>/', views.recipe_detail, name='recipe_detail'),

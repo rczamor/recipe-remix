@@ -1,8 +1,8 @@
-# Recipe Manager Application
+# Recipe Remix Application
 
 ## Overview
 
-This is a full-stack family recipe management web application built with Django and PostgreSQL. The application allows users to scrape recipes from URLs, store them in structured format, rate recipes, clone and modify them, generate shopping lists based on ingredients, and track revision history for each recipe. The app is publicly viewable without authentication and features an elegant, user-friendly interface built with Tailwind CSS and vanilla JavaScript.
+Recipe Remix is a full-stack family recipe management web application built with Django and PostgreSQL. The application allows authenticated users to manage their family's recipe collection, including scraping recipes from URLs, storing them in structured format, rating recipes, cloning and modifying them, generating shopping lists based on ingredients, and tracking revision history for each recipe. The app features user authentication, family group management with invitation system, and an elegant, user-friendly interface built with Tailwind CSS and vanilla JavaScript.
 
 ## User Preferences
 
@@ -124,6 +124,13 @@ Preferred communication style: Simple, everyday language.
 - **DEBUG**: Django debug mode (development vs production)
 - **SECRET_KEY**: Django security key for sessions and CSRF
 
+### Authentication & Family Features
+- **User Authentication**: Django-based login system with registration and session management
+- **Family Groups**: Users belong to family groups that share recipes, meal plans, and shopping lists
+- **Invitation System**: Family owners can invite members via email with unique invitation codes
+- **Access Control**: All views require authentication and filter content by family group
+- **User Interface**: Fun animated "Recipe Remix" logo with gradient effects
+
 ### Current Status (August 21, 2025)
 - ✓ Pure Django application (all Node.js remnants removed)
 - ✓ Django server running properly on port 8000
@@ -148,6 +155,11 @@ Preferred communication style: Simple, everyday language.
   - Created deployment scripts (run-build, run-start) for proper build and start processes
   - Build process now properly collects 130+ static files and runs migrations
   - All deployment scripts tested and working correctly
+- ✓ **Recipe Remix Rebrand**: Changed app name to "Recipe Remix" with animated gradient text logo
+- ✓ **Authentication System**: Implemented Django authentication with login, signup, and logout
+- ✓ **Family Management**: Created family groups where users can share recipes and meal plans
+- ✓ **Invitation System**: Family owners can invite members via email with unique invitation codes
+- ✓ **Access Control**: All views now require authentication and filter by family group
 
 ### Deployment Setup
 - **Build Command**: `./run-build`
