@@ -2,54 +2,48 @@
 
 ## Overview
 
-This Django recipe management application has been configured for deployment with the necessary build and start scripts.
+This Django recipe management application is configured for deployment with optimized build and start scripts.
 
 ## Build and Start Scripts
 
-Since the package.json cannot be directly modified, alternative script implementations have been created:
-
 ### Available Scripts
 
-1. **Build Script**: `./run-build` or `node package-scripts.js build`
+1. **Build Script**: `./run-build`
    - Collects static files using `python manage.py collectstatic --noinput`
    - Runs database migrations using `python manage.py migrate`
 
-2. **Start Script**: `./run-start` or `node package-scripts.js start`
+2. **Start Script**: `./run-start`
    - Starts the Django server using `python manage.py runserver 0.0.0.0:8000`
 
-3. **Development Script**: `npm run dev` or `node package-scripts.js dev`
-   - Starts the Django development server
+3. **Development Script**: `./start_server.sh`
+   - Starts the Django development server on port 8000
 
 ### Django Settings Configuration
 
-The following production-ready settings have been added to `recipe_manager/settings.py`:
+The following production-ready settings have been configured in `recipe_manager/settings.py`:
 
 - `STATIC_ROOT = BASE_DIR / "staticfiles"` - Directory for collected static files
-- Static files collection is now properly configured for deployment
+- Static files collection is properly configured for deployment
 
-### Files Created
+### Project Structure
 
-- `package-scripts.js` - Node.js script handler for build/start/dev commands
 - `run-build` - Executable bash script for build process
 - `run-start` - Executable bash script for start process
-- `build.sh` / `start.sh` - Alternative bash scripts
-- `scripts/build.js` / `scripts/start.js` - Node.js implementation scripts
+- `start_server.sh` - Development server script
 - `staticfiles/` - Directory for collected static files (created during build)
 
 ### Deployment Instructions
 
-For Replit deployment, the system should now be able to:
+For Replit deployment:
 
-1. **Build**: Use `./run-build` or `node package-scripts.js build`
-2. **Start**: Use `./run-start` or `node package-scripts.js start`
+1. **Build**: Use `./run-build`
+2. **Start**: Use `./run-start`
 
-The deployment system can reference these scripts instead of the missing npm scripts.
+### Port Configuration
 
-### Testing
-
-Both scripts have been tested and are working correctly:
-- Build process collects 130+ static files and applies migrations
-- Start process launches the Django server on port 8000
+All scripts are configured to use port 8000 consistently:
+- Django server runs on `0.0.0.0:8000`
+- Port forwarding configured to forward port 8000 to external port 80
 
 ## Alternative Deployment Configuration
 

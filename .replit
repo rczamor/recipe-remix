@@ -6,14 +6,11 @@ packages = ["bash", "freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", 
 [env]
 REPLIT_KEEP_PACKAGE_DEV_DEPENDENCIES = "1"
 
+
 [deployment]
 deploymentTarget = "autoscale"
 build = ["python3", "manage.py", "collectstatic", "--noinput"]
-run = ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
-
-[[ports]]
-localPort = 5000
-externalPort = 5000
+run = ["bash", "./start_server.sh"]
 
 [[ports]]
 localPort = 8000
